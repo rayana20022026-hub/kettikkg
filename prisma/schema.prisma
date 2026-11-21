@@ -1,0 +1,2247 @@
+// GETTIK.KG — Prisma Database Schema
+// Platform: Ridesharing / Carpooling for Kyrgyzstan
+// Based on the full 118-table architecture specification
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// MODULE 1: USERS & AUTHENTICATION (tables 1–10)
+// ============================================================
+
+model User {
+  id                   String    @id @default(uuid())
+  firstName            String    @map("first_name")
+  lastName             String    @map("last_name")
+  middleName           String?   @map("middle_name")
+  phone                String    @unique
+  phoneVerifiedAt      DateTime? @map("phone_verified_at")
+  email                String?   @unique
+  emailVerifiedAt      DateTime? @map("email_verified_at")
+  passwordHash         String?   @map("password_hash")
+  avatarMediaId        String?   @map("avatar_media_id")
+  birthDate            DateTime? @map("birth_date")
+  gender               String?
+  preferredLanguage    String?   @map("preferred_language")
+  /// active | blocked | suspended | pending_deletion | deleted
+  status               String    @default("active")
+  /// web | pwa | telegram
+  registrationSource   String?   @map("registration_source")
+  lastLoginAt          DateTime? @map("last_login_at")
+  lastActivityAt       DateTime? @map("last_activity_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  avatarMedia              MediaFile?               @relation("UserAvatar", fields: [avatarMediaId], references: [id])
+  profile                  UserProfile?
+  roleAssignments          UserRoleAssignment[]     @relation("UserRoles")
+  roleAssignmentsGiven     UserRoleAssignment[]     @relation("RoleAssignedBy")
+  sessions                 UserSession[]
+  devices                  UserDevice[]
+  consents                 UserConsent[]
+  driverProfile            DriverProfile?
+  driverApprovals          DriverProfile[]          @relation("DriverApprovedBy")
+  driverVerificationReviews DriverVerification[]    @relation("VerificationReviewer")
+  vehicleDocReviews        VehicleDocument[]        @relation("VehicleDocReviewer")
+  driverDocReviews         DriverDocument[]         @relation("DriverDocReviewer")
+  staffProfile             StaffProfile?
+  bookingsAsPassenger      Booking[]                @relation("PassengerBookings")
+  bookingStatusChanges     BookingStatusHistory[]
+  sentMessages             Message[]
+  chatParticipations       ChatParticipant[]
+  notifications            Notification[]
+  notificationPreferences  NotificationPreference[]
+  pushSubscriptions        PushSubscription[]
+  reviewsAuthored          Review[]                 @relation("ReviewAuthor")
+  reviewsReceived          Review[]                 @relation("ReviewRecipient")
+  reviewResponses          ReviewResponse[]
+  reviewReports            ReviewReport[]
+  complaints               Complaint[]              @relation("ComplaintsMade")
+  reportedComplaints       Complaint[]              @relation("ComplaintsAbout")
+  assignedComplaints       Complaint[]              @relation("ComplaintsAssigned")
+  complaintHistory         ComplaintHistory[]
+  supportTickets           SupportTicket[]
+  supportMessages          SupportMessage[]
+  supportAssignmentsStaff  SupportAssignment[]      @relation("AssignedStaff")
+  supportAssignmentsBy     SupportAssignment[]      @relation("AssignedBy")
+  adminAuditLogs           AdminAuditLog[]
+  tripFavorites            TripFavorite[]
+  savedRoutes              SavedRoute[]
+  expenses                 Expense[]
+  uploadedMedia            MediaFile[]              @relation("UploaderMedia")
+  bookingCancellations     BookingCancellation[]
+  bookingDisputesOpened    BookingDispute[]         @relation("DisputeOpener")
+  bookingDisputesAssigned  BookingDispute[]         @relation("DisputeAssigned")
+  loyaltyAccount           LoyaltyAccount?
+  referralsGiven           Referral[]               @relation("ReferrerUser")
+  referralsReceived        Referral[]               @relation("ReferredUser")
+  userSubscriptions        UserSubscription[]
+  telegramAccount          TelegramAccount?
+  aiConversations          AiConversation[]
+  aiRequests               AiRequest[]
+  aiActionsApproved        AiAction[]
+  analyticsEvents          AnalyticsEvent[]
+  searchEvents             SearchEvent[]
+  tripStatusChanges        TripStatusHistory[]
+  tripChangeLogs           TripChangeLog[]
+  systemSettingUpdates     SystemSetting[]
+  systemSettingHistory     SystemSettingHistory[]
+  financialJournals        FinancialJournal[]
+  financialPeriodsClosed   FinancialPeriod[]
+  bannersCreated           Banner[]
+  articlesAuthored         Article[]
+  promoCodeUsages          PromoCodeUsage[]
+  tripViews                TripView[]
+  matchingRequests         MatchingRequest[]
+  userFavorites            UserFavorite[]
+  payments                 Payment[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id                    String    @id @default(uuid())
+  userId                String    @unique @map("user_id")
+  bio                   String?
+  cityId                String?   @map("city_id")
+  address               String?
+  emergencyContactName  String?   @map("emergency_contact_name")
+  emergencyContactPhone String?   @map("emergency_contact_phone")
+  profileVisibility     String?   @map("profile_visibility")
+  showPhone             Boolean   @default(false) @map("show_phone")
+  showEmail             Boolean   @default(false) @map("show_email")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user User  @relation(fields: [userId], references: [id])
+  city City? @relation(fields: [cityId], references: [id])
+
+  @@map("user_profiles")
+}
+
+model UserRole {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  assignments UserRoleAssignment[]
+  permissions RolePermission[]
+
+  @@map("user_roles")
+}
+
+model UserRoleAssignment {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  roleId     String    @map("role_id")
+  assignedBy String?   @map("assigned_by")
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  expiresAt  DateTime? @map("expires_at")
+  isActive   Boolean   @default(true) @map("is_active")
+
+  user     User     @relation("UserRoles", fields: [userId], references: [id])
+  role     UserRole @relation(fields: [roleId], references: [id])
+  assigner User?    @relation("RoleAssignedBy", fields: [assignedBy], references: [id])
+
+  @@map("user_role_assignments")
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String   @map("role_id")
+  permissionId String   @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  role       UserRole   @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  refreshTokenHash String    @map("refresh_token_hash")
+  deviceName       String?   @map("device_name")
+  deviceType       String?   @map("device_type")
+  ipAddress        String?   @map("ip_address")
+  userAgent        String?   @map("user_agent")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_sessions")
+}
+
+model OtpCode {
+  id            String    @id @default(uuid())
+  phone         String
+  codeHash      String    @map("code_hash")
+  /// registration | login | recovery
+  purpose       String
+  attemptsCount Int       @default(0) @map("attempts_count")
+  maxAttempts   Int       @default(5) @map("max_attempts")
+  expiresAt     DateTime  @map("expires_at")
+  verifiedAt    DateTime? @map("verified_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("otp_codes")
+}
+
+model UserDevice {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  deviceUuid  String    @map("device_uuid")
+  deviceName  String?   @map("device_name")
+  platform    String?
+  browser     String?
+  pushEnabled Boolean   @default(false) @map("push_enabled")
+  lastSeenAt  DateTime? @map("last_seen_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user              User               @relation(fields: [userId], references: [id])
+  pushSubscriptions PushSubscription[]
+
+  @@map("user_devices")
+}
+
+model UserConsent {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  consentType     String    @map("consent_type")
+  documentVersion String    @map("document_version")
+  accepted        Boolean   @default(false)
+  acceptedAt      DateTime? @map("accepted_at")
+  ipAddress       String?   @map("ip_address")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_consents")
+}
+
+// ============================================================
+// MODULE 2: DRIVERS & VEHICLES (tables 11–18)
+// ============================================================
+
+model DriverProfile {
+  id                     String    @id @default(uuid())
+  userId                 String    @unique @map("user_id")
+  /// not_verified | pending | under_review | approved | rejected | blocked
+  verificationStatus     String    @default("not_verified") @map("verification_status")
+  verificationLevel      Int       @default(0) @map("verification_level")
+  licenseNumber          String?   @map("license_number")
+  licenseIssueDate       DateTime? @map("license_issue_date")
+  licenseExpiryDate      DateTime? @map("license_expiry_date")
+  drivingExperienceYears Int?      @map("driving_experience_years")
+  approvedAt             DateTime? @map("approved_at")
+  approvedBy             String?   @map("approved_by")
+  rejectionReason        String?   @map("rejection_reason")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  user           User                 @relation(fields: [userId], references: [id])
+  approver       User?                @relation("DriverApprovedBy", fields: [approvedBy], references: [id])
+  verifications  DriverVerification[]
+  vehicles        Vehicle[]
+  trips           Trip[]
+  documents       DriverDocument[]
+  tripPromotions  TripPromotion[]
+  bookings        Booking[]           @relation("DriverBookings")
+  driverLocations DriverLocation[]
+
+  @@map("driver_profiles")
+}
+
+model DriverVerification {
+  id               String    @id @default(uuid())
+  driverId         String    @map("driver_id")
+  verificationType String    @map("verification_type")
+  /// pending | approved | rejected
+  status           String    @default("pending")
+  submittedAt      DateTime  @default(now()) @map("submitted_at")
+  reviewedAt       DateTime? @map("reviewed_at")
+  reviewerId       String?   @map("reviewer_id")
+  rejectionReason  String?   @map("rejection_reason")
+  adminComment     String?   @map("admin_comment")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  driver   DriverProfile @relation(fields: [driverId], references: [id])
+  reviewer User?         @relation("VerificationReviewer", fields: [reviewerId], references: [id])
+
+  @@map("driver_verifications")
+}
+
+model VehicleBrand {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  models   VehicleModel[]
+  vehicles Vehicle[]
+
+  @@map("vehicle_brands")
+}
+
+model VehicleModel {
+  id                 String  @id @default(uuid())
+  brandId            String  @map("brand_id")
+  name               String
+  productionYearFrom Int?    @map("production_year_from")
+  productionYearTo   Int?    @map("production_year_to")
+  isActive           Boolean @default(true) @map("is_active")
+
+  brand    VehicleBrand @relation(fields: [brandId], references: [id])
+  vehicles Vehicle[]
+
+  @@map("vehicle_models")
+}
+
+model Vehicle {
+  id                           String    @id @default(uuid())
+  driverId                     String    @map("driver_id")
+  brandId                      String    @map("brand_id")
+  modelId                      String    @map("model_id")
+  productionYear               Int?      @map("production_year")
+  registrationNumber           String    @map("registration_number")
+  registrationNumberNormalized String?   @map("registration_number_normalized")
+  color                        String?
+  passengerCapacity            Int?      @map("passenger_capacity")
+  description                  String?
+  /// active | inactive | blocked
+  status                       String    @default("active")
+  isVerified                   Boolean   @default(false) @map("is_verified")
+  createdAt                    DateTime  @default(now()) @map("created_at")
+  updatedAt                    DateTime  @updatedAt @map("updated_at")
+  deletedAt                    DateTime? @map("deleted_at")
+
+  driver    DriverProfile     @relation(fields: [driverId], references: [id])
+  brand     VehicleBrand      @relation(fields: [brandId], references: [id])
+  model     VehicleModel      @relation(fields: [modelId], references: [id])
+  documents VehicleDocument[]
+  photos    VehiclePhoto[]
+  trips     Trip[]
+
+  @@map("vehicles")
+}
+
+model VehicleDocument {
+  id                 String    @id @default(uuid())
+  vehicleId          String    @map("vehicle_id")
+  documentType       String    @map("document_type")
+  mediaId            String    @map("media_id")
+  documentNumber     String?   @map("document_number")
+  issuedAt           DateTime? @map("issued_at")
+  expiresAt          DateTime? @map("expires_at")
+  /// pending | approved | rejected
+  verificationStatus String    @default("pending") @map("verification_status")
+  reviewedBy         String?   @map("reviewed_by")
+  reviewedAt         DateTime? @map("reviewed_at")
+  rejectionReason    String?   @map("rejection_reason")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id])
+  media    MediaFile @relation(fields: [mediaId], references: [id])
+  reviewer User?     @relation("VehicleDocReviewer", fields: [reviewedBy], references: [id])
+
+  @@map("vehicle_documents")
+}
+
+model DriverDocument {
+  id                 String    @id @default(uuid())
+  driverId           String    @map("driver_id")
+  documentType       String    @map("document_type")
+  documentNumberHash String?   @map("document_number_hash")
+  mediaId            String    @map("media_id")
+  issuedAt           DateTime? @map("issued_at")
+  expiresAt          DateTime? @map("expires_at")
+  /// pending | approved | rejected
+  verificationStatus String    @default("pending") @map("verification_status")
+  reviewedBy         String?   @map("reviewed_by")
+  reviewedAt         DateTime? @map("reviewed_at")
+  rejectionReason    String?   @map("rejection_reason")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  driver   DriverProfile @relation(fields: [driverId], references: [id])
+  media    MediaFile     @relation(fields: [mediaId], references: [id])
+  reviewer User?         @relation("DriverDocReviewer", fields: [reviewedBy], references: [id])
+
+  @@map("driver_documents")
+}
+
+model VehiclePhoto {
+  id        String   @id @default(uuid())
+  vehicleId String   @map("vehicle_id")
+  mediaId   String   @map("media_id")
+  sortOrder Int      @default(0) @map("sort_order")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  vehicle Vehicle   @relation(fields: [vehicleId], references: [id])
+  media   MediaFile @relation(fields: [mediaId], references: [id])
+
+  @@map("vehicle_photos")
+}
+
+// ============================================================
+// MODULE 3: GEOGRAPHY (tables 19–26)
+// ============================================================
+
+model Country {
+  id           String  @id @default(uuid())
+  code         String  @unique
+  name         String
+  phoneCode    String? @map("phone_code")
+  currencyCode String? @map("currency_code")
+  isActive     Boolean @default(true) @map("is_active")
+
+  regions Region[]
+
+  @@map("countries")
+}
+
+model Region {
+  id        String  @id @default(uuid())
+  countryId String  @map("country_id")
+  name      String
+  code      String?
+  isActive  Boolean @default(true) @map("is_active")
+
+  country Country @relation(fields: [countryId], references: [id])
+  cities  City[]
+
+  @@map("regions")
+}
+
+model City {
+  id        String   @id @default(uuid())
+  regionId  String   @map("region_id")
+  name      String
+  slug      String   @unique
+  latitude  Decimal?
+  longitude Decimal?
+  isActive  Boolean  @default(true) @map("is_active")
+  isPopular Boolean  @default(false) @map("is_popular")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  region             Region            @relation(fields: [regionId], references: [id])
+  translations       CityTranslation[]
+  aliases            CityAlias[]
+  pickupPoints       PickupPoint[]
+  userProfiles       UserProfile[]
+  tripsAsOrigin      Trip[]            @relation("TripOriginCity")
+  tripsAsDest        Trip[]            @relation("TripDestCity")
+  tripStops          TripStop[]
+  routesAsOrigin     Route[]           @relation("RouteOriginCity")
+  routesAsDest       Route[]           @relation("RouteDestCity")
+  savedRoutesOrigin  SavedRoute[]      @relation("SavedRouteOrigin")
+  savedRoutesDest    SavedRoute[]      @relation("SavedRouteDest")
+  matchingReqOrigin  MatchingRequest[] @relation("MatchingReqOrigin")
+  matchingReqDest    MatchingRequest[] @relation("MatchingReqDest")
+  searchEventsOrigin SearchEvent[]     @relation("SearchEventOrigin")
+  searchEventsDest   SearchEvent[]     @relation("SearchEventDest")
+
+  @@map("cities")
+}
+
+model CityTranslation {
+  id           String  @id @default(uuid())
+  cityId       String  @map("city_id")
+  languageCode String  @map("language_code")
+  name         String
+  description  String?
+
+  city City @relation(fields: [cityId], references: [id])
+
+  @@unique([cityId, languageCode])
+  @@map("city_translations")
+}
+
+model CityAlias {
+  id              String  @id @default(uuid())
+  cityId          String  @map("city_id")
+  alias           String
+  languageCode    String? @map("language_code")
+  normalizedAlias String? @map("normalized_alias")
+
+  city City @relation(fields: [cityId], references: [id])
+
+  @@map("city_aliases")
+}
+
+model Route {
+  id              String   @id @default(uuid())
+  originCityId    String   @map("origin_city_id")
+  destCityId      String   @map("destination_city_id")
+  slug            String   @unique
+  isPopular       Boolean  @default(false) @map("is_popular")
+  isActive        Boolean  @default(true) @map("is_active")
+  sortOrder       Int      @default(0) @map("sort_order")
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  originCity   City               @relation("RouteOriginCity", fields: [originCityId], references: [id])
+  destCity     City               @relation("RouteDestCity", fields: [destCityId], references: [id])
+  translations RouteTranslation[]
+
+  @@map("routes")
+}
+
+model RouteTranslation {
+  id           String  @id @default(uuid())
+  routeId      String  @map("route_id")
+  languageCode String  @map("language_code")
+  title        String
+  description  String?
+
+  route Route @relation(fields: [routeId], references: [id])
+
+  @@unique([routeId, languageCode])
+  @@map("route_translations")
+}
+
+model PickupPoint {
+  id          String   @id @default(uuid())
+  cityId      String   @map("city_id")
+  name        String
+  address     String?
+  latitude    Decimal?
+  longitude   Decimal?
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  city              City               @relation(fields: [cityId], references: [id])
+  tripPickupPoints  TripPickupPoint[]
+  tripDropoffPoints TripDropoffPoint[]
+
+  @@map("pickup_points")
+}
+
+// ============================================================
+// MODULE 4: TRIPS (tables 27–34)
+// ============================================================
+
+model Trip {
+  id                 String    @id @default(uuid())
+  driverId           String    @map("driver_id")
+  vehicleId          String    @map("vehicle_id")
+  originCityId       String    @map("origin_city_id")
+  destCityId         String    @map("destination_city_id")
+  originAddress      String?   @map("origin_address")
+  destAddress        String?   @map("destination_address")
+  originLatitude     Decimal?  @map("origin_latitude")
+  originLongitude    Decimal?  @map("origin_longitude")
+  destLatitude       Decimal?  @map("destination_latitude")
+  destLongitude      Decimal?  @map("destination_longitude")
+  departureAt        DateTime  @map("departure_at")
+  estimatedArrivalAt DateTime? @map("estimated_arrival_at")
+  totalSeats         Int       @map("total_seats")
+  availableSeats     Int       @map("available_seats")
+  pricePerSeat       Decimal   @map("price_per_seat")
+  currencyCode       String    @default("KGS") @map("currency_code")
+  description        String?
+  luggageAllowed     Boolean   @default(true) @map("luggage_allowed")
+  petsAllowed        Boolean   @default(false) @map("pets_allowed")
+  smokingAllowed     Boolean   @default(false) @map("smoking_allowed")
+  musicAllowed       Boolean   @default(true) @map("music_allowed")
+  /// draft | pending_moderation | published | full | in_progress | completed | cancelled | blocked | archived
+  status             String    @default("draft")
+  /// pending | approved | rejected
+  moderationStatus   String    @default("pending") @map("moderation_status")
+  publishedAt        DateTime? @map("published_at")
+  completedAt        DateTime? @map("completed_at")
+  cancelledAt        DateTime? @map("cancelled_at")
+  cancellationReason String?   @map("cancellation_reason")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  driver          DriverProfile       @relation(fields: [driverId], references: [id])
+  vehicle         Vehicle             @relation(fields: [vehicleId], references: [id])
+  originCity      City                @relation("TripOriginCity", fields: [originCityId], references: [id])
+  destCity        City                @relation("TripDestCity", fields: [destCityId], references: [id])
+  stops           TripStop[]
+  pickupPoints    TripPickupPoint[]
+  dropoffPoints   TripDropoffPoint[]
+  statusHistory   TripStatusHistory[]
+  changeLogs      TripChangeLog[]
+  favorites       TripFavorite[]
+  bookings        Booking[]
+  complaints      Complaint[]
+  views           TripView[]
+  recommendations TripRecommendation[]
+  promotions      TripPromotion[]
+  driverLocations DriverLocation[]
+
+  @@index([status, departureAt])
+  @@index([originCityId, destCityId, departureAt])
+  @@index([driverId])
+  @@map("trips")
+}
+
+model TripStop {
+  id               String    @id @default(uuid())
+  tripId           String    @map("trip_id")
+  cityId           String    @map("city_id")
+  stopOrder        Int       @map("stop_order")
+  address          String?
+  latitude         Decimal?
+  longitude        Decimal?
+  arrivalAt        DateTime? @map("arrival_at")
+  departureAt      DateTime? @map("departure_at")
+  isPickupAllowed  Boolean   @default(true) @map("is_pickup_allowed")
+  isDropoffAllowed Boolean   @default(true) @map("is_dropoff_allowed")
+
+  trip Trip @relation(fields: [tripId], references: [id])
+  city City @relation(fields: [cityId], references: [id])
+
+  @@map("trip_stops")
+}
+
+model TripPickupPoint {
+  id            String    @id @default(uuid())
+  tripId        String    @map("trip_id")
+  pickupPointId String?   @map("pickup_point_id")
+  cityId        String    @map("city_id")
+  address       String?
+  latitude      Decimal?
+  longitude     Decimal?
+  departureAt   DateTime? @map("departure_at")
+  isActive      Boolean   @default(true) @map("is_active")
+
+  trip        Trip         @relation(fields: [tripId], references: [id])
+  pickupPoint PickupPoint? @relation(fields: [pickupPointId], references: [id])
+  bookings    Booking[]    @relation("BookingPickup")
+
+  @@map("trip_pickup_points")
+}
+
+model TripDropoffPoint {
+  id                 String    @id @default(uuid())
+  tripId             String    @map("trip_id")
+  pickupPointId      String?   @map("pickup_point_id")
+  cityId             String    @map("city_id")
+  address            String?
+  latitude           Decimal?
+  longitude          Decimal?
+  estimatedArrivalAt DateTime? @map("estimated_arrival_at")
+  isActive           Boolean   @default(true) @map("is_active")
+
+  trip        Trip         @relation(fields: [tripId], references: [id])
+  pickupPoint PickupPoint? @relation(fields: [pickupPointId], references: [id])
+  bookings    Booking[]    @relation("BookingDropoff")
+
+  @@map("trip_dropoff_points")
+}
+
+model TripStatusHistory {
+  id        String   @id @default(uuid())
+  tripId    String   @map("trip_id")
+  oldStatus String?  @map("old_status")
+  newStatus String   @map("new_status")
+  changedBy String?  @map("changed_by")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  trip    Trip  @relation(fields: [tripId], references: [id])
+  changer User? @relation(fields: [changedBy], references: [id])
+
+  @@map("trip_status_history")
+}
+
+model TripChangeLog {
+  id        String   @id @default(uuid())
+  tripId    String   @map("trip_id")
+  changedBy String?  @map("changed_by")
+  fieldName String   @map("field_name")
+  oldValue  String?    @map("old_value")
+  newValue  String?    @map("new_value")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  trip    Trip  @relation(fields: [tripId], references: [id])
+  changer User? @relation(fields: [changedBy], references: [id])
+
+  @@map("trip_change_logs")
+}
+
+model TripFavorite {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tripId    String   @map("trip_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  trip Trip @relation(fields: [tripId], references: [id])
+
+  @@unique([userId, tripId])
+  @@map("trip_favorites")
+}
+
+model SavedRoute {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  originCityId   String    @map("origin_city_id")
+  destCityId     String    @map("destination_city_id")
+  preferredDate  DateTime? @map("preferred_date")
+  isAlertEnabled Boolean   @default(false) @map("is_alert_enabled")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user       User @relation(fields: [userId], references: [id])
+  originCity City @relation("SavedRouteOrigin", fields: [originCityId], references: [id])
+  destCity   City @relation("SavedRouteDest", fields: [destCityId], references: [id])
+
+  @@map("saved_routes")
+}
+
+// ============================================================
+// MODULE 5: BOOKINGS (tables 35–40)
+// ============================================================
+
+model Booking {
+  id                 String    @id @default(uuid())
+  bookingNumber      String    @unique @map("booking_number")
+  tripId             String    @map("trip_id")
+  passengerId        String    @map("passenger_id")
+  driverId           String    @map("driver_id")
+  pickupPointId      String?   @map("pickup_point_id")
+  dropoffPointId     String?   @map("dropoff_point_id")
+  seatsCount         Int       @map("seats_count")
+  pricePerSeat       Decimal   @map("price_per_seat")
+  subtotal           Decimal
+  platformFee        Decimal   @default(0) @map("platform_fee")
+  totalAmount        Decimal   @map("total_amount")
+  currencyCode       String    @default("KGS") @map("currency_code")
+  /// pending | confirmed | rejected | cancelled | completed | no_show | disputed
+  status             String    @default("pending")
+  /// pending | paid | failed | refunded
+  paymentStatus      String    @default("pending") @map("payment_status")
+  passengerComment   String?   @map("passenger_comment")
+  rejectionReason    String?   @map("rejection_reason")
+  cancellationReason String?   @map("cancellation_reason")
+  confirmedAt        DateTime? @map("confirmed_at")
+  cancelledAt        DateTime? @map("cancelled_at")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  trip              Trip                     @relation(fields: [tripId], references: [id])
+  passenger         User                     @relation("PassengerBookings", fields: [passengerId], references: [id])
+  driver            DriverProfile            @relation("DriverBookings", fields: [driverId], references: [id])
+  pickupPoint       TripPickupPoint?         @relation("BookingPickup", fields: [pickupPointId], references: [id])
+  dropoffPoint      TripDropoffPoint?        @relation("BookingDropoff", fields: [dropoffPointId], references: [id])
+  statusHistory     BookingStatusHistory[]
+  passengers        BookingPassenger[]
+  cancellation      BookingCancellation?
+  dispute           BookingDispute?
+  payments          Payment[]
+  financialSnapshot BookingFinancialSnapshot?
+  reviews           Review[]
+  complaints        Complaint[]
+  promoCodeUsages   PromoCodeUsage[]
+
+  @@index([passengerId])
+  @@index([driverId])
+  @@index([tripId, status])
+  @@map("bookings")
+}
+
+model BookingStatusHistory {
+  id        String   @id @default(uuid())
+  bookingId String   @map("booking_id")
+  oldStatus String?  @map("old_status")
+  newStatus String   @map("new_status")
+  changedBy String?  @map("changed_by")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  changer User?   @relation(fields: [changedBy], references: [id])
+
+  @@map("booking_status_history")
+}
+
+model BookingPassenger {
+  id         String   @id @default(uuid())
+  bookingId  String   @map("booking_id")
+  userId     String?  @map("user_id")
+  fullName   String   @map("full_name")
+  phone      String?
+  seatNumber String?  @map("seat_number")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("booking_passengers")
+}
+
+model BookingCancellation {
+  id               String   @id @default(uuid())
+  bookingId        String   @unique @map("booking_id")
+  cancelledBy      String   @map("cancelled_by")
+  /// passenger | driver | admin
+  cancellationType String   @map("cancellation_type")
+  reasonId         String?  @map("reason_id")
+  description      String?
+  refundAmount     Decimal? @map("refund_amount")
+  cancelledAt      DateTime @default(now()) @map("cancelled_at")
+
+  booking       Booking             @relation(fields: [bookingId], references: [id])
+  cancelledUser User                @relation(fields: [cancelledBy], references: [id])
+  reason        CancellationReason? @relation(fields: [reasonId], references: [id])
+
+  @@map("booking_cancellations")
+}
+
+model CancellationReason {
+  id           String  @id @default(uuid())
+  code         String  @unique
+  name         String
+  /// passenger | driver | both
+  applicableTo String  @map("applicable_to")
+  isActive     Boolean @default(true) @map("is_active")
+
+  cancellations BookingCancellation[]
+
+  @@map("cancellation_reasons")
+}
+
+model BookingDispute {
+  id          String    @id @default(uuid())
+  bookingId   String    @unique @map("booking_id")
+  openedBy    String    @map("opened_by")
+  disputeType String    @map("dispute_type")
+  description String?
+  /// open | in_review | resolved | closed
+  status      String    @default("open")
+  assignedTo  String?   @map("assigned_to")
+  resolution  String?
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  opener   User    @relation("DisputeOpener", fields: [openedBy], references: [id])
+  assignee User?   @relation("DisputeAssigned", fields: [assignedTo], references: [id])
+
+  @@map("booking_disputes")
+}
+
+// ============================================================
+// MODULE 6: PAYMENTS & FINANCE (tables 41–55)
+// ============================================================
+
+model PaymentProvider {
+  id                   String   @id @default(uuid())
+  code                 String   @unique
+  name                 String
+  apiBaseUrl           String?  @map("api_base_url")
+  credentialsReference String?  @map("credentials_reference")
+  /// active | inactive
+  status               String   @default("active")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  paymentMethods PaymentMethod[]
+  payments       Payment[]
+  webhooks       PaymentWebhook[]
+
+  @@map("payment_providers")
+}
+
+model PaymentMethod {
+  id         String  @id @default(uuid())
+  /// cash | bank_card | qr
+  code       String  @unique
+  name       String
+  providerId String? @map("provider_id")
+  isActive   Boolean @default(true) @map("is_active")
+  sortOrder  Int     @default(0) @map("sort_order")
+
+  provider PaymentProvider? @relation(fields: [providerId], references: [id])
+  payments Payment[]
+
+  @@map("payment_methods")
+}
+
+model Payment {
+  id                   String    @id @default(uuid())
+  bookingId            String    @map("booking_id")
+  payerId              String    @map("payer_id")
+  paymentMethodId      String    @map("payment_method_id")
+  providerId           String?   @map("provider_id")
+  paymentNumber        String    @unique @map("payment_number")
+  providerTransactionId String?  @map("provider_transaction_id")
+  amount               Decimal
+  currencyCode         String    @default("KGS") @map("currency_code")
+  /// pending | processing | succeeded | failed | cancelled | expired | partially_refunded | refunded
+  status               String    @default("pending")
+  paymentUrl           String?   @map("payment_url")
+  qrCodeMediaId        String?   @map("qr_code_media_id")
+  paidAt               DateTime? @map("paid_at")
+  expiresAt            DateTime? @map("expires_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  booking          Booking              @relation(fields: [bookingId], references: [id])
+  payer            User                 @relation(fields: [payerId], references: [id])
+  method           PaymentMethod        @relation(fields: [paymentMethodId], references: [id])
+  provider         PaymentProvider?     @relation(fields: [providerId], references: [id])
+  transactions     PaymentTransaction[]
+  refunds          Refund[]
+  tripPromotion    TripPromotion?
+  userSubscription UserSubscription?
+
+  @@map("payments")
+}
+
+model PaymentTransaction {
+  id                    String    @id @default(uuid())
+  paymentId             String    @map("payment_id")
+  providerTransactionId String?   @map("provider_transaction_id")
+  /// payment | capture | void
+  transactionType       String    @map("transaction_type")
+  amount                Decimal
+  currencyCode          String    @map("currency_code")
+  status                String
+  requestReference      String?   @map("request_reference")
+  responseCode          String?   @map("response_code")
+  responseData          String?     @map("response_data")
+  processedAt           DateTime? @map("processed_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("payment_transactions")
+}
+
+model PaymentWebhook {
+  id               String    @id @default(uuid())
+  providerId       String    @map("provider_id")
+  externalEventId  String    @map("external_event_id")
+  eventType        String    @map("event_type")
+  payload          String
+  signatureValid   Boolean   @default(false) @map("signature_valid")
+  /// pending | processed | failed
+  processingStatus String    @default("pending") @map("processing_status")
+  processedAt      DateTime? @map("processed_at")
+  errorMessage     String?   @map("error_message")
+  receivedAt       DateTime  @default(now()) @map("received_at")
+
+  provider PaymentProvider @relation(fields: [providerId], references: [id])
+
+  @@unique([providerId, externalEventId])
+  @@map("payment_webhooks")
+}
+
+model Refund {
+  id               String    @id @default(uuid())
+  paymentId        String    @map("payment_id")
+  bookingId        String    @map("booking_id")
+  refundNumber     String    @unique @map("refund_number")
+  amount           Decimal
+  currencyCode     String    @map("currency_code")
+  reason           String?
+  /// pending | processing | succeeded | failed
+  status           String    @default("pending")
+  providerRefundId String?   @map("provider_refund_id")
+  initiatedBy      String?   @map("initiated_by")
+  completedAt      DateTime? @map("completed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("refunds")
+}
+
+model CommissionRule {
+  id              String    @id @default(uuid())
+  name            String
+  /// fixed | percentage
+  commissionType  String    @map("commission_type")
+  commissionValue Decimal   @map("commission_value")
+  /// driver | passenger | both
+  payerType       String    @map("payer_type")
+  minAmount       Decimal?  @map("min_amount")
+  maxAmount       Decimal?  @map("max_amount")
+  validFrom       DateTime? @map("valid_from")
+  validUntil      DateTime? @map("valid_until")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  financialSnapshots BookingFinancialSnapshot[]
+
+  @@map("commission_rules")
+}
+
+model BookingFinancialSnapshot {
+  id                 String   @id @default(uuid())
+  bookingId          String   @unique @map("booking_id")
+  tripPrice          Decimal  @map("trip_price")
+  platformCommission Decimal  @map("platform_commission")
+  driverAmount       Decimal  @map("driver_amount")
+  passengerFee       Decimal  @default(0) @map("passenger_fee")
+  discountAmount     Decimal  @default(0) @map("discount_amount")
+  taxAmount          Decimal  @default(0) @map("tax_amount")
+  currencyCode       String   @map("currency_code")
+  commissionRuleId   String?  @map("commission_rule_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  booking        Booking         @relation(fields: [bookingId], references: [id])
+  commissionRule CommissionRule? @relation(fields: [commissionRuleId], references: [id])
+
+  @@map("booking_financial_snapshots")
+}
+
+model FinancialAccount {
+  id           String   @id @default(uuid())
+  accountCode  String   @unique @map("account_code")
+  accountName  String   @map("account_name")
+  /// asset | liability | revenue | expense | equity
+  accountType  String   @map("account_type")
+  currencyCode String   @map("currency_code")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  entries FinancialEntry[]
+
+  @@map("financial_accounts")
+}
+
+model FinancialJournal {
+  id              String    @id @default(uuid())
+  operationNumber String    @unique @map("operation_number")
+  /// payment | commission | refund | expense
+  operationType   String    @map("operation_type")
+  referenceType   String?   @map("reference_type")
+  referenceId     String?   @map("reference_id")
+  description     String?
+  /// draft | posted
+  status          String    @default("draft")
+  createdBy       String?   @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  postedAt        DateTime? @map("posted_at")
+
+  creator  User?            @relation(fields: [createdBy], references: [id])
+  entries  FinancialEntry[]
+  expenses Expense[]
+
+  @@map("financial_journals")
+}
+
+model FinancialEntry {
+  id           String   @id @default(uuid())
+  journalId    String   @map("journal_id")
+  accountId    String   @map("account_id")
+  debitAmount  Decimal  @default(0) @map("debit_amount")
+  creditAmount Decimal  @default(0) @map("credit_amount")
+  currencyCode String   @map("currency_code")
+  description  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  journal FinancialJournal @relation(fields: [journalId], references: [id])
+  account FinancialAccount @relation(fields: [accountId], references: [id])
+
+  @@map("financial_entries")
+}
+
+model ExpenseCategory {
+  id       String  @id @default(uuid())
+  name     String
+  parentId String? @map("parent_id")
+  isActive Boolean @default(true) @map("is_active")
+
+  parent   ExpenseCategory?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children ExpenseCategory[] @relation("CategoryParent")
+  expenses Expense[]
+
+  @@map("expense_categories")
+}
+
+model Expense {
+  id                 String    @id @default(uuid())
+  categoryId         String    @map("category_id")
+  amount             Decimal
+  currencyCode       String    @map("currency_code")
+  description        String?
+  expenseDate        DateTime  @map("expense_date")
+  responsibleUserId  String?   @map("responsible_user_id")
+  financialJournalId String?   @map("financial_journal_id")
+  /// pending | approved | rejected
+  status             String    @default("pending")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  category        ExpenseCategory   @relation(fields: [categoryId], references: [id])
+  responsibleUser User?             @relation(fields: [responsibleUserId], references: [id])
+  journal         FinancialJournal? @relation(fields: [financialJournalId], references: [id])
+  attachments     ExpenseAttachment[]
+
+  @@map("expenses")
+}
+
+model ExpenseAttachment {
+  id        String   @id @default(uuid())
+  expenseId String   @map("expense_id")
+  mediaId   String   @map("media_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  expense Expense   @relation(fields: [expenseId], references: [id])
+  media   MediaFile @relation(fields: [mediaId], references: [id])
+
+  @@map("expense_attachments")
+}
+
+model FinancialPeriod {
+  id         String    @id @default(uuid())
+  periodName String    @map("period_name")
+  startDate  DateTime  @map("start_date")
+  endDate    DateTime  @map("end_date")
+  /// open | closed
+  status     String    @default("open")
+  closedBy   String?   @map("closed_by")
+  closedAt   DateTime? @map("closed_at")
+
+  closer User? @relation(fields: [closedBy], references: [id])
+
+  @@map("financial_periods")
+}
+
+// ============================================================
+// MODULE 7: CHAT & MESSAGES (tables 56–60)
+// ============================================================
+
+model Chat {
+  id        String   @id @default(uuid())
+  bookingId String?  @map("booking_id")
+  tripId    String?  @map("trip_id")
+  /// booking | support | general
+  chatType  String   @map("chat_type")
+  /// active | closed | blocked
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@map("chats")
+}
+
+model ChatParticipant {
+  id         String    @id @default(uuid())
+  chatId     String    @map("chat_id")
+  userId     String    @map("user_id")
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+  leftAt     DateTime? @map("left_at")
+  lastReadAt DateTime? @map("last_read_at")
+  isMuted    Boolean   @default(false) @map("is_muted")
+
+  chat Chat @relation(fields: [chatId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("chat_participants")
+}
+
+model Message {
+  id          String    @id @default(uuid())
+  chatId      String    @map("chat_id")
+  senderId    String    @map("sender_id")
+  /// text | image | file | system
+  messageType String    @default("text") @map("message_type")
+  content     String?
+  replyToId   String?   @map("reply_to_id")
+  isEdited    Boolean   @default(false) @map("is_edited")
+  editedAt    DateTime? @map("edited_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  chat        Chat                @relation(fields: [chatId], references: [id])
+  sender      User                @relation(fields: [senderId], references: [id])
+  replyTo     Message?            @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies     Message[]           @relation("MessageReplies")
+  attachments MessageAttachment[]
+  reads       MessageRead[]
+
+  @@index([chatId, createdAt])
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  mediaId   String   @map("media_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message Message   @relation(fields: [messageId], references: [id])
+  media   MediaFile @relation(fields: [mediaId], references: [id])
+
+  @@map("message_attachments")
+}
+
+model MessageRead {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  userId    String   @map("user_id")
+  readAt    DateTime @default(now()) @map("read_at")
+
+  message Message @relation(fields: [messageId], references: [id])
+
+  @@unique([messageId, userId])
+  @@map("message_reads")
+}
+
+// ============================================================
+// MODULE 8: NOTIFICATIONS (tables 61–64)
+// ============================================================
+
+model Notification {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  notificationType String    @map("notification_type")
+  title            String
+  body             String?
+  referenceType    String?   @map("reference_type")
+  referenceId      String?   @map("reference_id")
+  data             String?
+  isRead           Boolean   @default(false) @map("is_read")
+  readAt           DateTime? @map("read_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user             User                   @relation(fields: [userId], references: [id])
+  deliveries       NotificationDelivery[]
+  telegramMessages TelegramBotMessage[]
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  notificationType String   @map("notification_type")
+  inAppEnabled     Boolean  @default(true) @map("in_app_enabled")
+  pushEnabled      Boolean  @default(true) @map("push_enabled")
+  telegramEnabled  Boolean  @default(false) @map("telegram_enabled")
+  smsEnabled       Boolean  @default(false) @map("sms_enabled")
+  emailEnabled     Boolean  @default(false) @map("email_enabled")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, notificationType])
+  @@map("notification_preferences")
+}
+
+model NotificationDelivery {
+  id               String    @id @default(uuid())
+  notificationId   String    @map("notification_id")
+  /// push | telegram | sms | email
+  channel          String
+  providerMessageId String?  @map("provider_message_id")
+  /// pending | sent | delivered | failed
+  status           String    @default("pending")
+  attemptsCount    Int       @default(0) @map("attempts_count")
+  errorMessage     String?   @map("error_message")
+  sentAt           DateTime? @map("sent_at")
+  deliveredAt      DateTime? @map("delivered_at")
+
+  notification Notification @relation(fields: [notificationId], references: [id])
+
+  @@map("notification_deliveries")
+}
+
+model PushSubscription {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  deviceId  String    @map("device_id")
+  endpoint  String
+  p256dhKey String    @map("p256dh_key")
+  authKey   String    @map("auth_key")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user   User       @relation(fields: [userId], references: [id])
+  device UserDevice @relation(fields: [deviceId], references: [id])
+
+  @@map("push_subscriptions")
+}
+
+// ============================================================
+// MODULE 9: REVIEWS & RATINGS (tables 65–67)
+// ============================================================
+
+model Review {
+  id               String    @id @default(uuid())
+  bookingId        String    @map("booking_id")
+  authorId         String    @map("author_id")
+  recipientId      String    @map("recipient_id")
+  rating           Int
+  comment          String?
+  /// pending | approved | rejected
+  moderationStatus String    @default("pending") @map("moderation_status")
+  publishedAt      DateTime? @map("published_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  booking   Booking          @relation(fields: [bookingId], references: [id])
+  author    User             @relation("ReviewAuthor", fields: [authorId], references: [id])
+  recipient User             @relation("ReviewRecipient", fields: [recipientId], references: [id])
+  responses ReviewResponse[]
+  reports   ReviewReport[]
+
+  @@unique([bookingId, authorId, recipientId])
+  @@map("reviews")
+}
+
+model ReviewResponse {
+  id        String   @id @default(uuid())
+  reviewId  String   @map("review_id")
+  userId    String   @map("user_id")
+  response  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  review Review @relation(fields: [reviewId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("review_responses")
+}
+
+model ReviewReport {
+  id          String   @id @default(uuid())
+  reviewId    String   @map("review_id")
+  reportedBy  String   @map("reported_by")
+  reason      String?
+  /// pending | reviewed | dismissed
+  status      String   @default("pending")
+  processedBy String?  @map("processed_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  review   Review @relation(fields: [reviewId], references: [id])
+  reporter User   @relation(fields: [reportedBy], references: [id])
+
+  @@map("review_reports")
+}
+
+// ============================================================
+// MODULE 10: COMPLAINTS & SUPPORT (tables 68–74)
+// ============================================================
+
+model ComplaintCategory {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  complaints Complaint[]
+
+  @@map("complaint_categories")
+}
+
+model Complaint {
+  id             String    @id @default(uuid())
+  complainantId  String    @map("complainant_id")
+  reportedUserId String?   @map("reported_user_id")
+  tripId         String?   @map("trip_id")
+  bookingId      String?   @map("booking_id")
+  categoryId     String    @map("category_id")
+  subject        String
+  description    String
+  /// open | in_review | resolved | closed
+  status         String    @default("open")
+  priority       String    @default("normal")
+  assignedTo     String?   @map("assigned_to")
+  resolution     String?
+  resolvedAt     DateTime? @map("resolved_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  complainant  User              @relation("ComplaintsMade", fields: [complainantId], references: [id])
+  reportedUser User?             @relation("ComplaintsAbout", fields: [reportedUserId], references: [id])
+  trip         Trip?             @relation(fields: [tripId], references: [id])
+  booking      Booking?          @relation(fields: [bookingId], references: [id])
+  category     ComplaintCategory @relation(fields: [categoryId], references: [id])
+  assignee     User?             @relation("ComplaintsAssigned", fields: [assignedTo], references: [id])
+  attachments  ComplaintAttachment[]
+  history      ComplaintHistory[]
+
+  @@map("complaints")
+}
+
+model ComplaintAttachment {
+  id          String   @id @default(uuid())
+  complaintId String   @map("complaint_id")
+  mediaId     String   @map("media_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  complaint Complaint @relation(fields: [complaintId], references: [id])
+  media     MediaFile @relation(fields: [mediaId], references: [id])
+
+  @@map("complaint_attachments")
+}
+
+model ComplaintHistory {
+  id          String   @id @default(uuid())
+  complaintId String   @map("complaint_id")
+  changedBy   String   @map("changed_by")
+  oldStatus   String?  @map("old_status")
+  newStatus   String   @map("new_status")
+  comment     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  complaint Complaint @relation(fields: [complaintId], references: [id])
+  changer   User      @relation(fields: [changedBy], references: [id])
+
+  @@map("complaint_history")
+}
+
+model SupportTicket {
+  id           String    @id @default(uuid())
+  ticketNumber String    @unique @map("ticket_number")
+  userId       String    @map("user_id")
+  category     String?
+  subject      String
+  description  String
+  /// open | in_progress | resolved | closed
+  status       String    @default("open")
+  priority     String    @default("normal")
+  assignedTo   String?   @map("assigned_to")
+  resolvedAt   DateTime? @map("resolved_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user        User                @relation(fields: [userId], references: [id])
+  messages    SupportMessage[]
+  assignments SupportAssignment[]
+
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id         String   @id @default(uuid())
+  ticketId   String   @map("ticket_id")
+  senderId   String   @map("sender_id")
+  message    String
+  isInternal Boolean  @default(false) @map("is_internal")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id])
+  sender User          @relation(fields: [senderId], references: [id])
+
+  @@map("support_messages")
+}
+
+model SupportAssignment {
+  id          String    @id @default(uuid())
+  ticketId    String    @map("ticket_id")
+  staffUserId String    @map("staff_user_id")
+  assignedBy  String    @map("assigned_by")
+  assignedAt  DateTime  @default(now()) @map("assigned_at")
+  acceptedAt  DateTime? @map("accepted_at")
+  completedAt DateTime? @map("completed_at")
+
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id])
+  staffUser User          @relation("AssignedStaff", fields: [staffUserId], references: [id])
+  assigner  User          @relation("AssignedBy", fields: [assignedBy], references: [id])
+
+  @@map("support_assignments")
+}
+
+// ============================================================
+// MODULE 11: ADMIN & STAFF (tables 75–77)
+// ============================================================
+
+model StaffProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique @map("user_id")
+  employeeNumber String?   @map("employee_number")
+  department     String?
+  position       String?
+  hiredAt        DateTime? @map("hired_at")
+  terminatedAt   DateTime? @map("terminated_at")
+  /// active | inactive | terminated
+  status         String    @default("active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("staff_profiles")
+}
+
+model AdminAuditLog {
+  id         String   @id @default(uuid())
+  adminId    String   @map("admin_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  oldValues  String?    @map("old_values")
+  newValues  String?    @map("new_values")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@map("admin_audit_logs")
+}
+
+model SystemActivityLog {
+  id        String   @id @default(uuid())
+  /// info | warning | error | critical
+  level     String
+  service   String
+  eventType String   @map("event_type")
+  message   String
+  context   String?
+  traceId   String?  @map("trace_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_activity_logs")
+}
+
+// ============================================================
+// MODULE 12: CMS & SEO (tables 78–85)
+// ============================================================
+
+model Banner {
+  id         String    @id @default(uuid())
+  title      String
+  subtitle   String?
+  mediaId    String?   @map("media_id")
+  buttonText String?   @map("button_text")
+  buttonUrl  String?   @map("button_url")
+  position   String?
+  sortOrder  Int       @default(0) @map("sort_order")
+  startsAt   DateTime? @map("starts_at")
+  endsAt     DateTime? @map("ends_at")
+  /// draft | active | paused | expired
+  status     String    @default("draft")
+  createdBy  String?   @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  media        MediaFile?          @relation(fields: [mediaId], references: [id])
+  creator      User?               @relation(fields: [createdBy], references: [id])
+  translations BannerTranslation[]
+
+  @@map("banners")
+}
+
+model BannerTranslation {
+  id           String  @id @default(uuid())
+  bannerId     String  @map("banner_id")
+  languageCode String  @map("language_code")
+  title        String
+  subtitle     String?
+  buttonText   String? @map("button_text")
+
+  banner Banner @relation(fields: [bannerId], references: [id])
+
+  @@unique([bannerId, languageCode])
+  @@map("banner_translations")
+}
+
+model ContentCategory {
+  id       String  @id @default(uuid())
+  parentId String? @map("parent_id")
+  name     String
+  slug     String  @unique
+  /// news | article | faq
+  type     String
+  isActive Boolean @default(true) @map("is_active")
+
+  parent   ContentCategory?  @relation("ContentCategoryParent", fields: [parentId], references: [id])
+  children ContentCategory[] @relation("ContentCategoryParent")
+  articles Article[]
+
+  @@map("content_categories")
+}
+
+model Article {
+  id              String    @id @default(uuid())
+  categoryId      String    @map("category_id")
+  authorId        String?   @map("author_id")
+  featuredMediaId String?   @map("featured_media_id")
+  /// draft | scheduled | published | archived
+  status          String    @default("draft")
+  publishedAt     DateTime? @map("published_at")
+  scheduledAt     DateTime? @map("scheduled_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  category      ContentCategory      @relation(fields: [categoryId], references: [id])
+  author        User?                @relation(fields: [authorId], references: [id])
+  featuredMedia MediaFile?           @relation(fields: [featuredMediaId], references: [id])
+  translations  ArticleTranslation[]
+
+  @@map("articles")
+}
+
+model ArticleTranslation {
+  id              String  @id @default(uuid())
+  articleId       String  @map("article_id")
+  languageCode    String  @map("language_code")
+  title           String
+  slug            String
+  excerpt         String?
+  content         String?
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description")
+  ogTitle         String? @map("og_title")
+  ogDescription   String? @map("og_description")
+  canonicalUrl    String? @map("canonical_url")
+
+  article Article @relation(fields: [articleId], references: [id])
+
+  @@unique([articleId, languageCode])
+  @@map("article_translations")
+}
+
+model FaqCategory {
+  id        String  @id @default(uuid())
+  name      String
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  items FaqItem[]
+
+  @@map("faq_categories")
+}
+
+model FaqItem {
+  id           String  @id @default(uuid())
+  categoryId   String  @map("category_id")
+  question     String
+  answer       String
+  languageCode String  @map("language_code")
+  sortOrder    Int     @default(0) @map("sort_order")
+  isActive     Boolean @default(true) @map("is_active")
+
+  category FaqCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("faq_items")
+}
+
+model StaticPage {
+  id           String   @id @default(uuid())
+  slug         String
+  /// about | contacts | terms | privacy
+  pageType     String   @map("page_type")
+  title        String
+  content      String?
+  languageCode String   @map("language_code")
+  /// draft | published
+  status       String   @default("published")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([slug, languageCode])
+  @@map("static_pages")
+}
+
+// ============================================================
+// MODULE 13: TELEGRAM BOT (tables 86–89)
+// ============================================================
+
+model TelegramAccount {
+  id             String    @id @default(uuid())
+  userId         String    @unique @map("user_id")
+  telegramUserId BigInt    @map("telegram_user_id")
+  username       String?
+  firstName      String?   @map("first_name")
+  languageCode   String?   @map("language_code")
+  isActive       Boolean   @default(true) @map("is_active")
+  linkedAt       DateTime  @default(now()) @map("linked_at")
+  unlinkedAt     DateTime? @map("unlinked_at")
+
+  user     User                 @relation(fields: [userId], references: [id])
+  messages TelegramBotMessage[]
+
+  @@map("telegram_accounts")
+}
+
+model TelegramLinkToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("telegram_link_tokens")
+}
+
+model TelegramBotUpdate {
+  id               String    @id @default(uuid())
+  updateId         BigInt    @unique @map("update_id")
+  updateType       String    @map("update_type")
+  payload          String
+  /// pending | processed | failed
+  processingStatus String    @default("pending") @map("processing_status")
+  processedAt      DateTime? @map("processed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@map("telegram_bot_updates")
+}
+
+model TelegramBotMessage {
+  id                String    @id @default(uuid())
+  telegramAccountId String    @map("telegram_account_id")
+  notificationId    String?   @map("notification_id")
+  chatId            BigInt    @map("chat_id")
+  messageId         BigInt?   @map("message_id")
+  /// pending | sent | failed
+  status            String    @default("pending")
+  sentAt            DateTime? @map("sent_at")
+
+  account      TelegramAccount @relation(fields: [telegramAccountId], references: [id])
+  notification Notification?   @relation(fields: [notificationId], references: [id])
+
+  @@map("telegram_bot_messages")
+}
+
+// ============================================================
+// MODULE 14: AI MODULE (tables 90–95)
+// ============================================================
+
+model AiConversation {
+  id               String   @id @default(uuid())
+  userId           String?  @map("user_id")
+  /// user | admin | support
+  conversationType String   @map("conversation_type")
+  /// active | closed
+  status           String   @default("active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user     User?       @relation(fields: [userId], references: [id])
+  messages AiMessage[]
+  requests AiRequest[]
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  /// user | assistant | system
+  role           String
+  content        String
+  modelName      String?  @map("model_name")
+  tokenUsage     Int?     @map("token_usage")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id])
+
+  @@map("ai_messages")
+}
+
+model AiRequest {
+  id             String   @id @default(uuid())
+  userId         String?  @map("user_id")
+  conversationId String?  @map("conversation_id")
+  /// support | analytics | classification
+  requestType    String   @map("request_type")
+  provider       String?
+  modelName      String?  @map("model_name")
+  inputTokens    Int?     @map("input_tokens")
+  outputTokens   Int?     @map("output_tokens")
+  costAmount     Decimal? @map("cost_amount")
+  /// pending | success | failed
+  status         String   @default("pending")
+  latencyMs      Int?     @map("latency_ms")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user         User?           @relation(fields: [userId], references: [id])
+  conversation AiConversation? @relation(fields: [conversationId], references: [id])
+  actions      AiAction[]
+
+  @@map("ai_requests")
+}
+
+model KnowledgeDocument {
+  id           String   @id @default(uuid())
+  title        String
+  /// faq | article | policy | manual
+  sourceType   String   @map("source_type")
+  sourceId     String?  @map("source_id")
+  languageCode String   @map("language_code")
+  content      String
+  /// active | archived
+  status       String   @default("active")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  chunks KnowledgeChunk[]
+
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  chunkIndex Int      @map("chunk_index")
+  content    String
+  // NOTE: vector embedding field requires pgvector extension.
+  // Add via raw migration: ALTER TABLE knowledge_chunks ADD COLUMN embedding vector(1536);
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document KnowledgeDocument @relation(fields: [documentId], references: [id])
+
+  @@map("knowledge_chunks")
+}
+
+model AiAction {
+  id             String    @id @default(uuid())
+  aiRequestId    String    @map("ai_request_id")
+  actionType     String    @map("action_type")
+  targetType     String?   @map("target_type")
+  targetId       String?   @map("target_id")
+  parameters     String?
+  /// pending | approved | rejected
+  approvalStatus String    @default("pending") @map("approval_status")
+  approvedBy     String?   @map("approved_by")
+  executedAt     DateTime? @map("executed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  aiRequest AiRequest @relation(fields: [aiRequestId], references: [id])
+  approver  User?     @relation(fields: [approvedBy], references: [id])
+
+  @@map("ai_actions")
+}
+
+// ============================================================
+// MODULE 15: PROMOTIONS & MONETIZATION (tables 96–101)
+// ============================================================
+
+model Promotion {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  /// percentage | fixed
+  discountType  String    @map("discount_type")
+  discountValue Decimal   @map("discount_value")
+  startsAt      DateTime? @map("starts_at")
+  endsAt        DateTime? @map("ends_at")
+  /// active | paused | expired
+  status        String    @default("active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  promoCodes PromoCode[]
+
+  @@map("promotions")
+}
+
+model PromoCode {
+  id                 String    @id @default(uuid())
+  promotionId        String    @map("promotion_id")
+  code               String    @unique
+  usageLimit         Int?      @map("usage_limit")
+  usagePerUser       Int?      @map("usage_per_user")
+  minimumOrderAmount Decimal?  @map("minimum_order_amount")
+  startsAt           DateTime? @map("starts_at")
+  expiresAt          DateTime? @map("expires_at")
+  isActive           Boolean   @default(true) @map("is_active")
+
+  promotion Promotion        @relation(fields: [promotionId], references: [id])
+  usages    PromoCodeUsage[]
+
+  @@map("promo_codes")
+}
+
+model PromoCodeUsage {
+  id             String   @id @default(uuid())
+  promoCodeId    String   @map("promo_code_id")
+  userId         String   @map("user_id")
+  bookingId      String   @map("booking_id")
+  discountAmount Decimal  @map("discount_amount")
+  usedAt         DateTime @default(now()) @map("used_at")
+
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+
+  @@map("promo_code_usages")
+}
+
+model TripPromotion {
+  id            String    @id @default(uuid())
+  tripId        String    @map("trip_id")
+  driverId      String    @map("driver_id")
+  /// boost | highlight | recommendation
+  promotionType String    @map("promotion_type")
+  amount        Decimal
+  startsAt      DateTime? @map("starts_at")
+  endsAt        DateTime? @map("ends_at")
+  paymentId     String?   @unique @map("payment_id")
+  /// active | expired | cancelled
+  status        String    @default("active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  trip    Trip          @relation(fields: [tripId], references: [id])
+  driver  DriverProfile @relation(fields: [driverId], references: [id])
+  payment Payment?      @relation(fields: [paymentId], references: [id])
+
+  @@map("trip_promotions")
+}
+
+model Subscription {
+  id           String  @id @default(uuid())
+  name         String
+  description  String?
+  price        Decimal
+  durationDays Int     @map("duration_days")
+  features     String?
+  isActive     Boolean @default(true) @map("is_active")
+
+  userSubscriptions UserSubscription[]
+
+  @@map("subscriptions")
+}
+
+model UserSubscription {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  subscriptionId String   @map("subscription_id")
+  paymentId      String?  @unique @map("payment_id")
+  startsAt       DateTime @map("starts_at")
+  expiresAt      DateTime @map("expires_at")
+  /// active | expired | cancelled
+  status         String   @default("active")
+
+  user         User         @relation(fields: [userId], references: [id])
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+  payment      Payment?     @relation(fields: [paymentId], references: [id])
+
+  @@map("user_subscriptions")
+}
+
+// ============================================================
+// MODULE 16: REFERRALS & LOYALTY (tables 102–104)
+// ============================================================
+
+model Referral {
+  id             String    @id @default(uuid())
+  referrerId     String    @map("referrer_id")
+  referredUserId String    @map("referred_user_id")
+  referralCode   String?   @map("referral_code")
+  /// registered | activated | completed
+  status         String    @default("registered")
+  rewardedAt     DateTime? @map("rewarded_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  referrer     User @relation("ReferrerUser", fields: [referrerId], references: [id])
+  referredUser User @relation("ReferredUser", fields: [referredUserId], references: [id])
+
+  @@map("referrals")
+}
+
+model LoyaltyAccount {
+  id            String   @id @default(uuid())
+  userId        String   @unique @map("user_id")
+  pointsBalance BigInt   @default(0) @map("points_balance")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user         User                 @relation(fields: [userId], references: [id])
+  transactions LoyaltyTransaction[]
+
+  @@map("loyalty_accounts")
+}
+
+model LoyaltyTransaction {
+  id               String   @id @default(uuid())
+  loyaltyAccountId String   @map("loyalty_account_id")
+  /// earn | spend | expire | adjust
+  transactionType  String   @map("transaction_type")
+  points           BigInt
+  referenceType    String?  @map("reference_type")
+  referenceId      String?  @map("reference_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  loyaltyAccount LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id])
+
+  @@map("loyalty_transactions")
+}
+
+// ============================================================
+// MODULE 17: MEDIA FILES (table 105)
+// ============================================================
+
+model MediaFile {
+  id           String    @id @default(uuid())
+  uploadedBy   String?   @map("uploaded_by")
+  originalName String?   @map("original_name")
+  storageKey   String    @map("storage_key")
+  bucket       String?
+  mimeType     String?   @map("mime_type")
+  fileSize     BigInt?   @map("file_size")
+  width        Int?
+  height       Int?
+  checksum     String?
+  /// public | private
+  visibility   String    @default("private")
+  /// active | quarantined | deleted
+  status       String    @default("active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  uploader             User?                 @relation("UploaderMedia", fields: [uploadedBy], references: [id])
+  userAvatars          User[]                @relation("UserAvatar")
+  vehicleDocuments     VehicleDocument[]
+  driverDocuments      DriverDocument[]
+  vehiclePhotos        VehiclePhoto[]
+  messageAttachments   MessageAttachment[]
+  complaintAttachments ComplaintAttachment[]
+  expenseAttachments   ExpenseAttachment[]
+  banners              Banner[]
+  articles             Article[]
+
+  @@map("media_files")
+}
+
+// ============================================================
+// MODULE 18: SETTINGS & LOCALIZATION (tables 106–108)
+// ============================================================
+
+model SystemSetting {
+  id           String   @id @default(uuid())
+  settingKey   String   @unique @map("setting_key")
+  settingValue String?    @map("setting_value")
+  settingGroup String?  @map("setting_group")
+  description  String?
+  updatedBy    String?  @map("updated_by")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  updater User?                  @relation(fields: [updatedBy], references: [id])
+  history SystemSettingHistory[]
+
+  @@map("system_settings")
+}
+
+model SystemSettingHistory {
+  id        String   @id @default(uuid())
+  settingId String   @map("setting_id")
+  oldValue  String?    @map("old_value")
+  newValue  String?    @map("new_value")
+  changedBy String?  @map("changed_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  setting SystemSetting @relation(fields: [settingId], references: [id])
+  changer User?         @relation(fields: [changedBy], references: [id])
+
+  @@map("system_setting_history")
+}
+
+model Translation {
+  id               String   @id @default(uuid())
+  translationKey   String   @map("translation_key")
+  languageCode     String   @map("language_code")
+  translationValue String   @map("translation_value")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@unique([translationKey, languageCode])
+  @@map("translations")
+}
+
+// ============================================================
+// MODULE 19: ANALYTICS (tables 109–112)
+// ============================================================
+
+model SearchEvent {
+  id              String    @id @default(uuid())
+  userId          String?   @map("user_id")
+  sessionId       String?   @map("session_id")
+  originCityId    String?   @map("origin_city_id")
+  destCityId      String?   @map("destination_city_id")
+  departureDate   DateTime? @map("departure_date")
+  passengersCount Int?      @map("passengers_count")
+  minPrice        Decimal?  @map("min_price")
+  maxPrice        Decimal?  @map("max_price")
+  resultsCount    Int?      @map("results_count")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user       User? @relation(fields: [userId], references: [id])
+  originCity City? @relation("SearchEventOrigin", fields: [originCityId], references: [id])
+  destCity   City? @relation("SearchEventDest", fields: [destCityId], references: [id])
+
+  @@index([originCityId, destCityId])
+  @@index([createdAt])
+  @@map("search_events")
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  sessionId  String?  @map("session_id")
+  eventName  String   @map("event_name")
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  /// web | pwa | telegram
+  source     String?
+  metadata   String?
+  occurredAt DateTime @default(now()) @map("occurred_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([occurredAt])
+  @@index([eventName])
+  @@map("analytics_events")
+}
+
+model TrafficSource {
+  id        String   @id @default(uuid())
+  source    String
+  medium    String?
+  campaign  String?
+  content   String?
+  term      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("traffic_sources")
+}
+
+model TripView {
+  id        String   @id @default(uuid())
+  tripId    String   @map("trip_id")
+  userId    String?  @map("user_id")
+  sessionId String?  @map("session_id")
+  source    String?
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  trip Trip  @relation(fields: [tripId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("trip_views")
+}
+
+// ============================================================
+// MODULE 20: FUTURE FEATURES (tables 113–118)
+// ============================================================
+
+model DriverLocation {
+  id         String   @id @default(uuid())
+  driverId   String   @map("driver_id")
+  tripId     String?  @map("trip_id")
+  latitude   Decimal
+  longitude  Decimal
+  recordedAt DateTime @default(now()) @map("recorded_at")
+  expiresAt  DateTime @map("expires_at")
+
+  driver DriverProfile @relation(fields: [driverId], references: [id])
+  trip   Trip?         @relation(fields: [tripId], references: [id])
+
+  @@map("driver_locations")
+}
+
+model TripRecommendation {
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  tripId              String   @map("trip_id")
+  recommendationScore Decimal  @map("recommendation_score")
+  recommendationReason String?   @map("recommendation_reason")
+  algorithmVersion    String?  @map("algorithm_version")
+  createdAt           DateTime @default(now()) @map("created_at")
+  expiresAt           DateTime @map("expires_at")
+
+  trip Trip @relation(fields: [tripId], references: [id])
+
+  @@map("trip_recommendations")
+}
+
+model MatchingRequest {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  originCityId    String    @map("origin_city_id")
+  destCityId      String    @map("destination_city_id")
+  departureDate   DateTime  @map("departure_date")
+  passengersCount Int       @map("passengers_count")
+  minPrice        Decimal?  @map("min_price")
+  maxPrice        Decimal?  @map("max_price")
+  /// pending | matched | expired
+  status          String    @default("pending")
+  expiresAt       DateTime  @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user       User @relation(fields: [userId], references: [id])
+  originCity City @relation("MatchingReqOrigin", fields: [originCityId], references: [id])
+  destCity   City @relation("MatchingReqDest", fields: [destCityId], references: [id])
+
+  @@map("matching_requests")
+}
+
+model Partner {
+  id           String  @id @default(uuid())
+  name         String
+  partnerType  String  @map("partner_type")
+  description  String?
+  website      String?
+  logoMediaId  String? @map("logo_media_id")
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+  /// active | inactive
+  status       String  @default("active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  offers PartnerOffer[]
+
+  @@map("partners")
+}
+
+model PartnerOffer {
+  id           String    @id @default(uuid())
+  partnerId    String    @map("partner_id")
+  title        String
+  description  String?
+  price        Decimal?
+  currencyCode String?   @map("currency_code")
+  startsAt     DateTime? @map("starts_at")
+  endsAt       DateTime? @map("ends_at")
+  /// active | paused | expired
+  status       String    @default("active")
+
+  partner Partner @relation(fields: [partnerId], references: [id])
+
+  @@map("partner_offers")
+}
+
+model UserFavorite {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  /// trip | partner | route
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, entityType, entityId])
+  @@map("user_favorites")
+}
+
