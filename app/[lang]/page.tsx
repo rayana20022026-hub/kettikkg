@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { hasLocale, type Locale } from "@/app/[lang]/dictionaries-shared";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Stats } from "@/components/Stats";
@@ -11,23 +13,27 @@ import { Faq } from "@/components/Faq";
 import { CtaSection } from "@/components/CtaSection";
 import { Footer } from "@/components/Footer";
 
-export default function Home() {
+export default async function Home({ params }: PageProps<"/[lang]">) {
+  const { lang } = await params;
+  if (!hasLocale(lang)) notFound();
+  const locale = lang as Locale;
+
   return (
     <>
       <Header />
       <main className="flex-1">
-        <Hero />
-        <Stats />
-        <PopularDirections />
-        <RecentTrips />
-        <HowItWorks />
-        <Advantages />
-        <ForDrivers />
-        <Reviews />
+        <Hero locale={locale} />
+        <Stats locale={locale} />
+        <PopularDirections locale={locale} />
+        <RecentTrips locale={locale} />
+        <HowItWorks locale={locale} />
+        <Advantages locale={locale} />
+        <ForDrivers locale={locale} />
+        <Reviews locale={locale} />
         <Faq />
-        <CtaSection />
+        <CtaSection locale={locale} />
       </main>
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

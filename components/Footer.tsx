@@ -1,3 +1,5 @@
+import { getDictionary } from "@/app/[lang]/dictionaries";
+import type { Locale } from "@/app/[lang]/dictionaries-shared";
 import {
   IconFacebook,
   IconInstagram,
@@ -9,26 +11,10 @@ import {
 import { Logo } from "./Logo";
 import { CopyrightYear } from "./CopyrightYear";
 
-const columns = [
-  {
-    title: "Платформа",
-    links: ["Поиск поездок", "Популярные направления", "Как это работает", "Стать водителем"],
-  },
-  {
-    title: "Компания",
-    links: ["О проекте", "Новости и акции", "Контакты", "Блог"],
-  },
-  {
-    title: "Поддержка",
-    links: ["Помощь и FAQ", "Правила бронирования", "Политика отмены", "Связаться с нами"],
-  },
-  {
-    title: "Документы",
-    links: ["Политика конфиденциальности", "Публичная оферта", "Условия использования", "Обработка данных"],
-  },
-];
+export async function Footer({ locale }: { locale: Locale }) {
+  const dict = await getDictionary(locale);
+  const t = dict.footer;
 
-export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -42,8 +28,7 @@ export function Footer() {
               </span>
             </a>
             <p className="mt-4 text-sm leading-relaxed text-slate-500">
-              Цифровая платформа поиска попутчиков и онлайн-бронирования мест в
-              междугородних поездках по Кыргызстану.
+              {t.description}
             </p>
 
             <div className="mt-5 space-y-2 text-sm">
@@ -83,7 +68,7 @@ export function Footer() {
           </div>
 
           {/* Link columns */}
-          {columns.map((col) => (
+          {t.columns.map((col) => (
             <div key={col.title}>
               <h3 className="text-sm font-bold text-slate-900">{col.title}</h3>
               <ul className="mt-4 space-y-2.5">
@@ -104,14 +89,14 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row">
           <p className="text-sm text-slate-500">
-            © <CopyrightYear /> GETTIK.KG. Все права защищены.
+            © <CopyrightYear /> GETTIK.KG. {t.allRightsReserved}
           </p>
           <div className="flex items-center gap-4 text-sm text-slate-500">
-            <span>Кыргызская Республика</span>
+            <span>{t.country}</span>
             <span className="h-1 w-1 rounded-full bg-slate-300" />
-            <span>Валюта: KGS</span>
+            <span>{t.currencyLabel} {t.currencyValue}</span>
             <span className="h-1 w-1 rounded-full bg-slate-300" />
-            <span>РУС · КЫР</span>
+            <span>{t.languageLabel}</span>
           </div>
         </div>
       </div>

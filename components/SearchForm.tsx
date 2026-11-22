@@ -11,21 +11,7 @@ import {
   IconSearch,
   IconUsers,
 } from "./icons";
-
-const cities = [
-  "Бишкек",
-  "Каракол",
-  "Ош",
-  "Чолпон-Ата",
-  "Нарын",
-  "Талас",
-  "Балыкчы",
-  "Жалал-Абад",
-  "Токмок",
-  "Кант",
-  "Кемин",
-  "Узген",
-];
+import { useTranslations } from "./LocaleProvider";
 
 function Field({
   label,
@@ -52,8 +38,12 @@ function Field({
 }
 
 export function SearchForm() {
-  const [from, setFrom] = useState("Бишкек");
-  const [to, setTo] = useState("Каракол");
+  const dict = useTranslations();
+  const t = dict.searchForm;
+  const cities = dict.cities;
+
+  const [from, setFrom] = useState(cities[0] ?? "");
+  const [to, setTo] = useState(cities[1] ?? "");
   const [date, setDate] = useState("");
   const [passengers, setPassengers] = useState(1);
 
@@ -62,6 +52,11 @@ export function SearchForm() {
     setTo(from);
   };
 
+  const passengerLabel = `${passengers} ${plural(
+    passengers,
+    dict.plural.passenger as [string, string, string],
+  )}`;
+
   return (
     <form
       onSubmit={(e) => e.preventDefault()}
@@ -69,12 +64,12 @@ export function SearchForm() {
     >
       <div className="flex flex-col gap-1 lg:flex-row lg:items-stretch">
         {/* From */}
-        <Field label="Откуда" icon={<IconMapPin className="h-[18px] w-[18px]" />}>
+        <Field label={t.from} icon={<IconMapPin className="h-[18px] w-[18px]" />}>
           <input
             list="cities"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            placeholder="Город отправления"
+            placeholder={t.fromPlaceholder}
             className="w-full bg-transparent text-[15px] font-semibold text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400"
           />
         </Field>
@@ -84,7 +79,7 @@ export function SearchForm() {
           <button
             type="button"
             onClick={swap}
-            aria-label="Поменять направление"
+            aria-label={t.swap}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 lg:rotate-0"
           >
             <IconArrowSwap className="h-4 w-4" />
@@ -92,18 +87,18 @@ export function SearchForm() {
         </div>
 
         {/* To */}
-        <Field label="Куда" icon={<IconNavigationPrimary />}>
+        <Field label={t.to} icon={<IconMapPin className="h-[18px] w-[18px]" />}>
           <input
             list="cities"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            placeholder="Город назначения"
+            placeholder={t.toPlaceholder}
             className="w-full bg-transparent text-[15px] font-semibold text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400"
           />
         </Field>
 
         {/* Date */}
-        <Field label="Дата" icon={<IconCalendar className="h-[18px] w-[18px]" />}>
+        <Field label={t.date} icon={<IconCalendar className="h-[18px] w-[18px]" />}>
           <input
             type="date"
             value={date}
@@ -113,23 +108,26 @@ export function SearchForm() {
         </Field>
 
         {/* Passengers */}
-        <Field label="Пассажиры" icon={<IconUsers className="h-[18px] w-[18px]" />}>
+        <Field
+          label={t.passengers}
+          icon={<IconUsers className="h-[18px] w-[18px]" />}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[15px] font-semibold text-slate-900">
-              {passengers} {plural(passengers)}
+              {passengerLabel}
             </span>
             <div className="flex items-center gap-1">
               <Stepper
                 onClick={() => setPassengers((p) => Math.max(1, p - 1))}
                 disabled={passengers <= 1}
-                aria-label="Меньше"
+                aria-label={t.decrease}
               >
                 <IconMinus className="h-3.5 w-3.5" />
               </Stepper>
               <Stepper
                 onClick={() => setPassengers((p) => Math.min(8, p + 1))}
                 disabled={passengers >= 8}
-                aria-label="Больше"
+                aria-label={t.increase}
               >
                 <IconPlus className="h-3.5 w-3.5" />
               </Stepper>
@@ -143,7 +141,7 @@ export function SearchForm() {
           className="m-1 flex items-center justify-center gap-2 rounded-2xl bg-brand-600 px-6 py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 active:bg-brand-800"
         >
           <IconSearch className="h-5 w-5" />
-          <span>Найти поездку</span>
+          <span>{t.submit}</span>
           <IconArrowRight className="h-4 w-4 opacity-70" />
         </button>
       </div>
@@ -181,14 +179,10 @@ function Stepper({
   );
 }
 
-function IconNavigationPrimary() {
-  return <IconMapPin className="h-[18px] w-[18px]" />;
-}
-
-function plural(n: number) {
+function plural(n: number, forms: [string, string, string]) {
   const mod10 = n % 10;
   const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "пассажир";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "пассажира";
-  return "пассажиров";
+  if (mod10 === 1 && mod100 !== 11) return forms[0];
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return forms[1];
+  return forms[2];
 }

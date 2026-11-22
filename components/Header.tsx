@@ -8,18 +8,40 @@ import {
   IconSearch,
 } from "./icons";
 import { Logo } from "./Logo";
+import { useTranslations, useLocale } from "./LocaleProvider";
+import type { Locale } from "@/app/[lang]/dictionaries-shared";
 
-const nav = [
-  { label: "Поиск поездок", href: "#search" },
-  { label: "Как это работает", href: "#how" },
-  { label: "Направления", href: "#directions" },
-  { label: "Водителям", href: "#drivers" },
-  { label: "Помощь", href: "#faq" },
+/** Ordered list of locale switcher options. */
+const localeSwitcher: { locale: Locale; label: string }[] = [
+  { locale: "ru", label: "РУС" },
+  { locale: "kg", label: "КЫР" },
+  { locale: "en", label: "ENG" },
 ];
 
+const COOKIE_NAME = "NEXT_LOCALE";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
+function switchLocale(next: Locale) {
+  document.cookie = `${COOKIE_NAME}=${next}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+  window.location.href = `/${next}`;
+}
+
 export function Header() {
+  const dict = useTranslations();
+  const locale = useLocale();
+  const t = dict.header;
+
+  const nav = [
+    { label: t.search, href: "#search" },
+    { label: t.howItWorks, href: "#how" },
+    { label: t.directions, href: "#directions" },
+    { label: t.forDrivers, href: "#drivers" },
+    { label: t.help, href: "#faq" },
+  ];
+
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -34,6 +56,17 @@ export function Header() {
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  // Close lang dropdown when clicking outside.
+  useEffect(() => {
+    if (!langOpen) return;
+    const handler = () => setLangOpen(false);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [langOpen]);
+
+  const currentLabel =
+    localeSwitcher.find((l) => l.locale === locale)?.label ?? "РУС";
 
   return (
     <header
@@ -64,26 +97,54 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            aria-label="Сменить язык"
-          >
-            <IconGlobe className="h-4 w-4" />
-            РУС
-          </button>
+          {/* Language switcher dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLangOpen((v) => !v);
+              }}
+              className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              aria-label={t.changeLanguage}
+              aria-expanded={langOpen}
+            >
+              <IconGlobe className="h-4 w-4" />
+              {currentLabel}
+            </button>
+
+            {langOpen && (
+              <div className="absolute right-0 top-full mt-1 w-28 overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg">
+                {localeSwitcher.map(({ locale: l, label }) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => { setLangOpen(false); switchLocale(l); }}
+                    className={`block w-full px-4 py-2 text-left text-sm font-medium transition-colors hover:bg-slate-50 ${
+                      l === locale
+                        ? "text-brand-600 font-semibold"
+                        : "text-slate-700"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <a
             href="#search"
             className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-300 hover:bg-slate-50"
           >
-            Войти
+            {t.login}
           </a>
           <a
             href="#search"
             className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
           >
             <IconSearch className="h-4 w-4" />
-            Найти поездку
+            {t.findRide}
           </a>
         </div>
 
@@ -91,7 +152,7 @@ export function Header() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="flex h-10 w-10 items-center justify-center rounded-full text-slate-800 transition-colors hover:bg-slate-100 lg:hidden"
-          aria-label="Меню"
+          aria-label={t.menu}
           aria-expanded={open}
         >
           {open ? <IconClose className="h-5 w-5" /> : <IconMenu className="h-5 w-5" />}
@@ -127,20 +188,39 @@ export function Header() {
               {item.label}
             </a>
           ))}
+
+          {/* Mobile locale switcher */}
+          <div className="mt-2 flex items-center justify-center gap-1 border-t border-slate-100 pt-3">
+            {localeSwitcher.map(({ locale: l, label }) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => { setOpen(false); switchLocale(l); }}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  l === locale
+                    ? "bg-brand-600 text-white"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <div className="mt-2 flex items-center gap-2 border-t border-slate-100 pt-3">
             <a
               href="#search"
               onClick={() => setOpen(false)}
               className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-center text-sm font-semibold text-slate-800"
             >
-              Войти
+              {t.login}
             </a>
             <a
               href="#search"
               onClick={() => setOpen(false)}
               className="flex-1 rounded-xl bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
             >
-              Найти поездку
+              {t.findRide}
             </a>
           </div>
         </nav>

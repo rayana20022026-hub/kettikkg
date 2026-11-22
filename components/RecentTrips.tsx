@@ -1,11 +1,56 @@
+import { getDictionary } from "@/app/[lang]/dictionaries";
+import type { Locale } from "@/app/[lang]/dictionaries-shared";
 import { IconCar, IconClock, IconMapPin, IconStar, IconUsers } from "./icons";
 import { SectionHeading } from "./PopularDirections";
 
-type Trip = {
+export async function RecentTrips({ locale }: { locale: Locale }) {
+  const dict = await getDictionary(locale);
+  const t = dict.recentTrips;
+  const common = dict.common;
+
+  return (
+    <section className="bg-slate-50/70 py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+          <SectionHeading
+            align="left"
+            eyebrow={t.eyebrow}
+            title={t.title}
+            description={t.description}
+          />
+          <a
+            href="#search"
+            className="hidden shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
+          >
+            {t.allTrips}
+            <IconMapPin className="h-4 w-4" />
+          </a>
+        </div>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {t.items.map((trip, i) => (
+            <TripCard
+              key={i}
+              trip={trip}
+              currency={common.currency}
+              bookButton={t.bookButton}
+              pluralSeats={dict.plural.seat as [string, string, string]}
+              pluralTrips={dict.plural.trip as [string, string, string]}
+              months={common.months}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+type TripItem = {
   from: string;
   to: string;
   time: string;
-  date: string;
+  day: number;
+  month: number;
   driver: string;
   initials: string;
   rating: number;
@@ -16,96 +61,24 @@ type Trip = {
   verified: boolean;
 };
 
-const trips: Trip[] = [
-  {
-    from: "Бишкек",
-    to: "Каракол",
-    time: "08:00",
-    date: "25 ноября",
-    driver: "Азамат",
-    initials: "А",
-    rating: 4.9,
-    trips: 218,
-    car: "Toyota Prius",
-    seats: 3,
-    price: 700,
-    verified: true,
-  },
-  {
-    from: "Бишкек",
-    to: "Чолпон-Ата",
-    time: "09:30",
-    date: "25 ноября",
-    driver: "Эрлан",
-    initials: "Э",
-    rating: 4.8,
-    trips: 96,
-    car: "Hyundai Sonata",
-    seats: 2,
-    price: 600,
-    verified: true,
-  },
-  {
-    from: "Бишкек",
-    to: "Ош",
-    time: "06:00",
-    date: "26 ноября",
-    driver: "Нурлан",
-    initials: "Н",
-    rating: 5.0,
-    trips: 142,
-    car: "Mitsubishi Delica",
-    seats: 4,
-    price: 1200,
-    verified: true,
-  },
-  {
-    from: "Бишкек",
-    to: "Балыкчы",
-    time: "14:00",
-    date: "25 ноября",
-    driver: "Жылдыз",
-    initials: "Ж",
-    rating: 4.7,
-    trips: 54,
-    car: "Toyota Camry",
-    seats: 3,
-    price: 400,
-    verified: true,
-  },
-];
+function TripCard({
+  trip,
+  currency,
+  bookButton,
+  pluralSeats,
+  pluralTrips,
+  months,
+}: {
+  trip: TripItem;
+  currency: string;
+  bookButton: string;
+  pluralSeats: [string, string, string];
+  pluralTrips: [string, string, string];
+  months: string[];
+}) {
+  const monthName = months[trip.month - 1] ?? String(trip.month);
+  const dateLabel = `${trip.day} ${monthName}`;
 
-export function RecentTrips() {
-  return (
-    <section className="bg-slate-50/70 py-16 sm:py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
-          <SectionHeading
-            align="left"
-            eyebrow="Свежие объявления"
-            title="Недавно опубликованные поездки"
-            description="Актуальные предложения от проверенных водителей — бронируйте, пока есть свободные места."
-          />
-          <a
-            href="#search"
-            className="hidden shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
-          >
-            Все поездки
-            <IconMapPin className="h-4 w-4" />
-          </a>
-        </div>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {trips.map((t, i) => (
-            <TripCard key={i} trip={t} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TripCard({ trip }: { trip: Trip }) {
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl">
       {/* Route */}
@@ -116,8 +89,19 @@ function TripCard({ trip }: { trip: Trip }) {
         <div className="flex flex-1 items-center gap-2 font-bold text-slate-900">
           <span>{trip.from}</span>
           <svg viewBox="0 0 24 8" className="h-2 flex-1" fill="none">
-            <path d="M0 4h20" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="2 3" />
-            <path d="M18 4l-3-2M18 4l-3 2" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M0 4h20"
+              stroke="#cbd5e1"
+              strokeWidth="2"
+              strokeDasharray="2 3"
+            />
+            <path
+              d="M18 4l-3-2M18 4l-3 2"
+              stroke="#cbd5e1"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           <span>{trip.to}</span>
         </div>
@@ -130,7 +114,7 @@ function TripCard({ trip }: { trip: Trip }) {
           <span className="font-semibold text-slate-900">{trip.time}</span>
         </span>
         <span className="h-1 w-1 rounded-full bg-slate-300" />
-        <span>{trip.date}</span>
+        <span>{dateLabel}</span>
       </div>
 
       {/* Driver */}
@@ -140,10 +124,20 @@ function TripCard({ trip }: { trip: Trip }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-bold text-slate-900">{trip.driver}</p>
+            <p className="truncate text-sm font-bold text-slate-900">
+              {trip.driver}
+            </p>
             {trip.verified && (
               <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-3 w-3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               </span>
@@ -152,7 +146,7 @@ function TripCard({ trip }: { trip: Trip }) {
           <div className="flex items-center gap-1 text-xs text-slate-500">
             <IconStar className="h-3 w-3 text-accent-500" />
             <span className="font-semibold text-slate-700">{trip.rating}</span>
-            <span>· {trip.trips} поездок</span>
+            <span>· {trip.trips} {pluralTrips[2]}</span>
           </div>
         </div>
       </div>
@@ -168,17 +162,21 @@ function TripCard({ trip }: { trip: Trip }) {
         <div>
           <div className="flex items-center gap-1 text-xs text-slate-500">
             <IconUsers className="h-3.5 w-3.5" />
-            <span className="font-semibold text-slate-700">{trip.seats}</span> мест
+            <span className="font-semibold text-slate-700">{trip.seats}</span>{" "}
+            {pluralSeats[2]}
           </div>
           <p className="mt-0.5 text-xl font-bold text-slate-900">
-            {trip.price} <span className="text-sm font-medium text-slate-500">сом</span>
+            {trip.price}{" "}
+            <span className="text-sm font-medium text-slate-500">
+              {currency}
+            </span>
           </p>
         </div>
         <button
           type="button"
           className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
         >
-          Забронировать
+          {bookButton}
         </button>
       </div>
     </article>

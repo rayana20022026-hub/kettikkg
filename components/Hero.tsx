@@ -1,22 +1,14 @@
+import { getDictionary } from "@/app/[lang]/dictionaries";
+import type { Locale, Dictionary } from "@/app/[lang]/dictionaries-shared";
 import { SearchForm } from "./SearchForm";
 import { IconMapPin, IconShieldCheck, IconStar, IconUsers } from "./icons";
 
-const popular = [
-  "Бишкек → Каракол",
-  "Бишкек → Ош",
-  "Бишкек → Чолпон-Ата",
-  "Бишкек → Нарын",
-  "Бишкек → Талас",
-  "Бишкек → Балыкчы",
-];
+export async function Hero({ locale }: { locale: Locale }) {
+  const dict = await getDictionary(locale);
+  const t = dict.hero;
+  const common = dict.common;
+  const monthName = common.months[t.departureMonth - 1] ?? String(t.departureMonth);
 
-const stats = [
-  { value: "7 регионов", label: "Кыргызстана" },
-  { value: "1 200+", label: "активных водителей" },
-  { value: "4.9", label: "средний рейтинг" },
-];
-
-export function Hero() {
   return (
     <section id="top" className="relative overflow-hidden">
       {/* Background */}
@@ -34,26 +26,27 @@ export function Hero() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-600" />
               </span>
-              Платформа поездок №1 в Кыргызстане
+              {t.badge}
             </span>
 
             <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Путешествуйте вместе.{" "}
+              {t.titleLine1}{" "}
               <span className="bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">
-                Бронируйте места
+                {t.titleHighlight}
               </span>{" "}
-              в один клик.
+              {t.titleLine2}
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-600">
-              GETTIK.KG объединяет водителей и пассажиров в единую цифровую
-              экосистему. Находите поездки по городам Кыргызстана, бронируйте
-              места онлайн и путешествуйте безопасно с проверенными водителями.
+              {t.description}
             </p>
 
             <dl className="mt-8 grid max-w-md grid-cols-3 gap-4">
-              {stats.map((s) => (
-                <div key={s.label} className="rounded-2xl border border-slate-100 bg-white/70 px-3 py-3 shadow-sm backdrop-blur">
+              {t.stats.map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-2xl border border-slate-100 bg-white/70 px-3 py-3 shadow-sm backdrop-blur"
+                >
                   <dt className="text-xl font-bold text-slate-900">{s.value}</dt>
                   <dd className="text-xs text-slate-500">{s.label}</dd>
                 </div>
@@ -61,7 +54,12 @@ export function Hero() {
             </dl>
           </div>
 
-          <HeroPreview />
+          <HeroPreview
+            t={t}
+            common={common}
+            monthName={monthName}
+            pluralTrips={dict.plural.trip as [string, string, string]}
+          />
         </div>
 
         {/* Search */}
@@ -71,9 +69,9 @@ export function Hero() {
           {/* Popular directions chips */}
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-slate-500">
-              Популярные направления:
+              {t.popularLabel}
             </span>
-            {popular.map((route) => (
+            {t.popularRoutes.map((route) => (
               <a
                 key={route}
                 href="#directions"
@@ -89,7 +87,20 @@ export function Hero() {
   );
 }
 
-function HeroPreview() {
+type HeroT = Dictionary["hero"];
+type CommonT = Dictionary["common"];
+
+function HeroPreview({
+  t,
+  common,
+  monthName,
+  pluralTrips,
+}: {
+  t: HeroT;
+  common: CommonT;
+  monthName: string;
+  pluralTrips: [string, string, string];
+}) {
   return (
     <div className="relative mx-auto w-full max-w-md lg:max-w-none">
       {/* Map-ish backdrop card */}
@@ -101,10 +112,10 @@ function HeroPreview() {
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-brand-600">
               <IconMapPin className="h-4 w-4" />
             </span>
-            Предложение дня
+            {t.offerOfDay}
           </div>
           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-            Проверен
+            {t.verified}
           </span>
         </div>
 
@@ -112,9 +123,15 @@ function HeroPreview() {
         <div className="relative mt-5 rounded-2xl bg-slate-50 p-5">
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-slate-400">Отправление</span>
-              <span className="text-base font-bold text-slate-900">Бишкек</span>
-              <span className="text-xs text-slate-500">08:00 · 25 ноября</span>
+              <span className="text-xs font-medium text-slate-400">
+                {t.departure}
+              </span>
+              <span className="text-base font-bold text-slate-900">
+                {t.departureCity}
+              </span>
+              <span className="text-xs text-slate-500">
+                {t.departureTime} · {t.departureDay} {monthName}
+              </span>
             </div>
             <div className="mx-3 flex-1">
               <svg viewBox="0 0 120 24" className="h-6 w-full" fill="none">
@@ -134,9 +151,13 @@ function HeroPreview() {
               </svg>
             </div>
             <div className="flex flex-col text-right">
-              <span className="text-xs font-medium text-slate-400">Прибытие</span>
-              <span className="text-base font-bold text-slate-900">Каракол</span>
-              <span className="text-xs text-slate-500">~11:30</span>
+              <span className="text-xs font-medium text-slate-400">
+                {t.arrival}
+              </span>
+              <span className="text-base font-bold text-slate-900">
+                {t.arrivalCity}
+              </span>
+              <span className="text-xs text-slate-500">{t.arrivalTime}</span>
             </div>
           </div>
         </div>
@@ -144,36 +165,46 @@ function HeroPreview() {
         {/* Driver */}
         <div className="mt-4 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-base font-bold text-white">
-            А
+            {t.driverInitials}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-bold text-slate-900">Азамат</p>
+            <p className="text-sm font-bold text-slate-900">{t.driverName}</p>
             <div className="flex items-center gap-1 text-xs text-slate-500">
               <IconStar className="h-3.5 w-3.5 text-accent-500" />
-              <span className="font-semibold text-slate-700">4.9</span>
-              <span>· 218 поездок</span>
+              <span className="font-semibold text-slate-700">{t.driverRating}</span>
+              <span>· {t.driverTrips} {pluralTrips[2]}</span>
             </div>
           </div>
           <div className="text-right">
             <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-              Цена за место
+              {t.pricePerSeat}
             </p>
-            <p className="text-lg font-bold text-slate-900">700 сом</p>
+            <p className="text-lg font-bold text-slate-900">
+              {t.price} {common.currency}
+            </p>
           </div>
         </div>
 
         {/* Meta */}
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <Meta label="Авто" value="Toyota Prius" />
-          <Meta label="Свободно" value="3 места" icon={<IconUsers className="h-3.5 w-3.5" />} />
-          <Meta label="Багаж" value="Разрешён" icon={<IconShieldCheck className="h-3.5 w-3.5" />} />
+          <Meta label={t.carLabel} value={t.carValue} />
+          <Meta
+            label={t.seatsLabel}
+            value={`${t.seatsValue}`}
+            icon={<IconUsers className="h-3.5 w-3.5" />}
+          />
+          <Meta
+            label={t.luggageLabel}
+            value={t.luggageValue}
+            icon={<IconShieldCheck className="h-3.5 w-3.5" />}
+          />
         </div>
 
         <button
           type="button"
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
         >
-          Забронировать место
+          {t.bookSeat}
         </button>
       </div>
 
@@ -183,8 +214,8 @@ function HeroPreview() {
           <IconShieldCheck className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-sm font-bold text-slate-900">Безопасная оплата</p>
-          <p className="text-xs text-slate-500">Защита бронирования</p>
+          <p className="text-sm font-bold text-slate-900">{t.safePayment}</p>
+          <p className="text-xs text-slate-500">{t.bookingProtection}</p>
         </div>
       </div>
     </div>

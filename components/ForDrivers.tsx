@@ -1,13 +1,18 @@
-import { IconCar, IconWallet, IconBolt, IconClipboardCheck, IconArrowRight, IconCheck } from "./icons";
+import { getDictionary } from "@/app/[lang]/dictionaries";
+import type { Locale } from "@/app/[lang]/dictionaries-shared";
+import {
+  IconCar,
+  IconWallet,
+  IconBolt,
+  IconClipboardCheck,
+  IconArrowRight,
+  IconCheck,
+} from "./icons";
 
-const perks = [
-  "Бесплатная регистрация и публикация поездок",
-  "Управление автомобилями и расписанием в личном кабинете",
-  "Заявки на бронирование с проверкой доступных мест",
-  "Учёт доходов и аналитика по маршрутам",
-];
+export async function ForDrivers({ locale }: { locale: Locale }) {
+  const dict = await getDictionary(locale);
+  const t = dict.forDrivers;
 
-export function ForDrivers() {
   return (
     <section id="drivers" className="scroll-mt-20 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -21,19 +26,17 @@ export function ForDrivers() {
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
                 <IconBolt className="h-3.5 w-3.5 text-accent-400" />
-                Для водителей
+                {t.badge}
               </span>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Компенсируйте расходы на дорогу
+                {t.title}
               </h2>
               <p className="mt-4 max-w-lg text-lg leading-relaxed text-slate-300">
-                Публикуйте поездки за пару минут, получайте заявки от пассажиров
-                и управляйте заработком в одном кабинете. Платформа берёт на
-                себя поиск, коммуникацию и бронирование.
+                {t.description}
               </p>
 
               <ul className="mt-7 space-y-3">
-                {perks.map((p) => (
+                {t.perks.map((p) => (
                   <li key={p} className="flex items-start gap-3 text-slate-200">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
                       <IconCheck className="h-3.5 w-3.5" />
@@ -48,14 +51,14 @@ export function ForDrivers() {
                   href="#search"
                   className="flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100"
                 >
-                  Стать водителем
+                  {t.becomeDriver}
                   <IconArrowRight className="h-4 w-4" />
                 </a>
                 <a
                   href="#how"
                   className="flex items-center justify-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
                 >
-                  Как это работает
+                  {t.howItWorks}
                 </a>
               </div>
             </div>
@@ -69,14 +72,17 @@ export function ForDrivers() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/20 text-brand-300">
                       <IconWallet className="h-4 w-4" />
                     </span>
-                    Доход за неделю
+                    {t.weeklyEarnings}
                   </div>
                   <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-400">
                     +12%
                   </span>
                 </div>
                 <p className="mt-5 text-4xl font-bold text-white">
-                  28 400 <span className="text-xl font-medium text-slate-400">сом</span>
+                  {t.weeklyAmount}{" "}
+                  <span className="text-xl font-medium text-slate-400">
+                    {dict.common.currency}
+                  </span>
                 </p>
 
                 {/* mini bar chart */}
@@ -92,9 +98,17 @@ export function ForDrivers() {
                 </div>
 
                 <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-5 text-center">
-                  <Stat label="Поездок" value="14" />
-                  <Stat label="Пассажиров" value="42" icon={<IconCar className="h-3.5 w-3.5" />} />
-                  <Stat label="Рейтинг" value="4.9" icon={<IconClipboardCheck className="h-3.5 w-3.5" />} />
+                  <Stat label={t.tripsLabel} value={t.tripsValue} />
+                  <Stat
+                    label={t.passengersLabel}
+                    value={t.passengersValue}
+                    icon={<IconCar className="h-3.5 w-3.5" />}
+                  />
+                  <Stat
+                    label={t.ratingLabel}
+                    value={t.ratingValue}
+                    icon={<IconClipboardCheck className="h-3.5 w-3.5" />}
+                  />
                 </div>
               </div>
             </div>

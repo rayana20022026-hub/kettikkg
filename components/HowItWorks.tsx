@@ -1,53 +1,45 @@
 import { IconSearch, IconShieldCheck, IconRoute } from "./icons";
 import { SectionHeading } from "./PopularDirections";
+import { getDictionary } from "@/app/[lang]/dictionaries";
+import type { Locale } from "@/app/[lang]/dictionaries-shared";
+import type { ComponentType, SVGProps } from "react";
 
-const steps = [
-  {
-    n: "01",
-    icon: IconSearch,
-    title: "Найдите поездку",
-    text: "Укажите город отправления, назначения, дату и количество пассажиров — система покажет актуальные предложения.",
-    color: "bg-brand-50 text-brand-600",
-  },
-  {
-    n: "02",
-    icon: IconShieldCheck,
-    title: "Забронируйте место",
-    text: "Выберите поездку, посмотрите профиль водителя и автомобиль, отправьте заявку и дождитесь подтверждения.",
-    color: "bg-accent-50 text-accent-600",
-  },
-  {
-    n: "03",
-    icon: IconRoute,
-    title: "Отправляйтесь в путь",
-    text: "Свяжитесь с водителем через чат, узнайте точку посадки и путешествуйте. После поездки оставьте отзыв.",
-    color: "bg-emerald-50 text-emerald-600",
-  },
-];
+type IconKey = "search" | "shieldCheck" | "route";
 
-export function HowItWorks() {
+const iconMap: Record<IconKey, ComponentType<SVGProps<SVGSVGElement>>> = {
+  search: IconSearch,
+  shieldCheck: IconShieldCheck,
+  route: IconRoute,
+};
+
+export async function HowItWorks({ locale }: { locale: Locale }) {
+  const dict = await getDictionary(locale);
+  const t = dict.howItWorks;
+
   return (
     <section id="how" className="scroll-mt-20 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Как это работает"
-          title="Три простых шага до поездки"
-          description="От поиска маршрута до прибытия в пункт назначения — всё в едином интерфейсе GETTIK.KG."
+          eyebrow={t.eyebrow}
+          title={t.title}
+          description={t.description}
         />
 
         <div className="relative mt-12 grid gap-6 lg:grid-cols-3">
           {/* connecting line */}
           <div className="absolute left-0 right-0 top-9 hidden h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent lg:block" />
 
-          {steps.map((s) => {
-            const Icon = s.icon;
+          {t.steps.map((s) => {
+            const Icon = iconMap[s.icon as IconKey] ?? IconSearch;
             return (
               <div
                 key={s.n}
                 className="relative rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand-200 hover:shadow-lg"
               >
                 <div className="flex items-center gap-4">
-                  <span className={`flex h-14 w-14 items-center justify-center rounded-2xl ${s.color}`}>
+                  <span
+                    className={`flex h-14 w-14 items-center justify-center rounded-2xl ${s.color}`}
+                  >
                     <Icon className="h-7 w-7" />
                   </span>
                   <span className="text-4xl font-bold text-slate-100">{s.n}</span>

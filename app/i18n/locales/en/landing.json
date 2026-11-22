@@ -1,0 +1,223 @@
+{
+  "metadata": {
+    "title": "GETTIK.KG — Find Rideshares & Book Intercity Trips in Kyrgyzstan",
+    "description": "GETTIK.KG is a digital platform for finding rideshares and booking seats in intercity trips across Kyrgyzstan. Verified drivers, transparent pricing, secure booking.",
+    "keywords": [
+      "rideshare Kyrgyzstan",
+      "trips Bishkek Karakol",
+      "seat booking",
+      "GETTIK",
+      "intercity travel"
+    ],
+    "ogTitle": "GETTIK.KG — Find Rideshares & Book Trips",
+    "ogDescription": "Find verified trips, book seats online, and travel across Kyrgyzstan safely."
+  },
+  "header": {
+    "search": "Search Trips",
+    "howItWorks": "How It Works",
+    "directions": "Directions",
+    "forDrivers": "For Drivers",
+    "help": "Help",
+    "login": "Log In",
+    "findRide": "Find a Ride",
+    "changeLanguage": "Change Language",
+    "menu": "Menu"
+  },
+  "hero": {
+    "badge": "Kyrgyzstan's #1 Ride Platform",
+    "titleLine1": "Travel Together.",
+    "titleHighlight": "Book Seats",
+    "titleLine2": "in One Click.",
+    "description": "GETTIK.KG connects drivers and passengers in a single digital ecosystem. Find trips between cities in Kyrgyzstan, book seats online, and travel safely with verified drivers.",
+    "stats": [
+      { "value": "7 Regions", "label": "of Kyrgyzstan" },
+      { "value": "1,200+", "label": "Active Drivers" },
+      { "value": "4.9", "label": "Average Rating" }
+    ],
+    "popularLabel": "Popular routes:",
+    "popularRoutes": [
+      "Bishkek → Karakol",
+      "Bishkek → Osh",
+      "Bishkek → Cholpon-Ata",
+      "Bishkek → Naryn",
+      "Bishkek → Talas",
+      "Bishkek → Balykchy"
+    ],
+    "offerOfDay": "Deal of the Day",
+    "verified": "Verified",
+    "departure": "Departure",
+    "departureCity": "Bishkek",
+    "departureTime": "08:00",
+    "departureDay": 25,
+    "departureMonth": 10,
+    "arrival": "Arrival",
+    "arrivalCity": "Karakol",
+    "arrivalTime": "~11:30",
+    "driverName": "Azamat",
+    "driverInitials": "A",
+    "driverRating": "4.9",
+    "driverTrips": 218,
+    "pricePerSeat": "Price per seat",
+    "price": 700,
+    "carLabel": "Car",
+    "carValue": "Toyota Prius",
+    "seatsLabel": "Available",
+    "seatsValue": 3,
+    "luggageLabel": "Luggage",
+    "luggageValue": "Allowed",
+    "bookSeat": "Book a Seat",
+    "safePayment": "Secure Payment",
+    "bookingProtection": "Booking Protection"
+  },
+  "searchForm": {
+    "from": "From",
+    "fromPlaceholder": "Departure city",
+    "to": "To",
+    "toPlaceholder": "Destination city",
+    "date": "Date",
+    "passengers": "Passengers",
+    "swap": "Swap direction",
+    "decrease": "Decrease",
+    "increase": "Increase",
+    "submit": "Find a Ride"
+  },
+  "stats": [
+    { "value": "12,000+", "label": "Registered Users" },
+    { "value": "1,200+", "label": "Active Verified Drivers" },
+    { "value": "7", "label": "Regions of Kyrgyzstan Covered" },
+    { "value": "48,000+", "label": "Completed Trips to Date" }
+  ],
+  "popularDirections": {
+    "eyebrow": "Popular Directions",
+    "title": "Most Chosen Routes",
+    "description": "Up-to-date offers on the most in-demand intercity routes in Kyrgyzstan.",
+    "items": [
+      { "from": "Bishkek", "to": "Karakol", "distanceKm": 400, "durationHours": 4, "fromPrice": 700, "trips": 48, "gradient": "from-brand-500 to-brand-700" },
+      { "from": "Bishkek", "to": "Osh", "distanceKm": 610, "durationHours": 9, "fromPrice": 1200, "trips": 32, "gradient": "from-sky-500 to-brand-700" },
+      { "from": "Bishkek", "to": "Cholpon-Ata", "distanceKm": 260, "durationHours": 3.5, "fromPrice": 600, "trips": 65, "gradient": "from-cyan-500 to-blue-600" },
+      { "from": "Bishkek", "to": "Naryn", "distanceKm": 340, "durationHours": 5, "fromPrice": 800, "trips": 19, "gradient": "from-indigo-500 to-brand-700" },
+      { "from": "Bishkek", "to": "Talas", "distanceKm": 330, "durationHours": 5, "fromPrice": 750, "trips": 14, "gradient": "from-violet-500 to-brand-700" },
+      { "from": "Bishkek", "to": "Balykchy", "distanceKm": 180, "durationHours": 2.5, "fromPrice": 400, "trips": 41, "gradient": "from-blue-500 to-cyan-600" }
+    ]
+  },
+  "recentTrips": {
+    "eyebrow": "Latest Listings",
+    "title": "Recently Published Trips",
+    "description": "Fresh offers from verified drivers — book while seats are available.",
+    "allTrips": "All Trips",
+    "bookButton": "Book",
+    "items": [
+      { "from": "Bishkek", "to": "Karakol", "time": "08:00", "day": 25, "month": 10, "driver": "Azamat", "initials": "A", "rating": 4.9, "trips": 218, "car": "Toyota Prius", "seats": 3, "price": 700, "verified": true },
+      { "from": "Bishkek", "to": "Cholpon-Ata", "time": "09:30", "day": 25, "month": 10, "driver": "Erlan", "initials": "E", "rating": 4.8, "trips": 96, "car": "Hyundai Sonata", "seats": 2, "price": 600, "verified": true },
+      { "from": "Bishkek", "to": "Osh", "time": "06:00", "day": 26, "month": 10, "driver": "Nurlan", "initials": "N", "rating": 5.0, "trips": 142, "car": "Mitsubishi Delica", "seats": 4, "price": 1200, "verified": true },
+      { "from": "Bishkek", "to": "Balykchy", "time": "14:00", "day": 25, "month": 10, "driver": "Zhyldyz", "initials": "Zh", "rating": 4.7, "trips": 54, "car": "Toyota Camry", "seats": 3, "price": 400, "verified": true }
+    ]
+  },
+  "howItWorks": {
+    "eyebrow": "How It Works",
+    "title": "Three Simple Steps to Your Trip",
+    "description": "From searching a route to arriving at your destination — all within the GETTIK.KG interface.",
+    "steps": [
+      { "n": "01", "icon": "search", "title": "Find a Trip", "text": "Enter your departure city, destination, date, and number of passengers — the system will show available offers.", "color": "bg-brand-50 text-brand-600" },
+      { "n": "02", "icon": "shieldCheck", "title": "Book a Seat", "text": "Choose a trip, review the driver's profile and vehicle, send a request, and wait for confirmation.", "color": "bg-accent-50 text-accent-600" },
+      { "n": "03", "icon": "route", "title": "Hit the Road", "text": "Connect with the driver via chat, get the pickup point, and travel. Leave a review after your trip.", "color": "bg-emerald-50 text-emerald-600" }
+    ]
+  },
+  "advantages": {
+    "eyebrow": "Why GETTIK.KG",
+    "title": "Safe, Convenient and Transparent",
+    "description": "The platform is built as a unified ecosystem: search, booking, communication, and payment are automated and secure.",
+    "features": [
+      { "icon": "shieldCheck", "title": "Verified Drivers", "text": "Every driver completes identity and document verification before publishing trips." },
+      { "icon": "userCheck", "title": "Rating System", "text": "Real reviews from confirmed trips build the reputation of drivers and passengers alike." },
+      { "icon": "creditCard", "title": "Transparent Pricing", "text": "The fare is locked in at the time of booking. No hidden fees or markups." },
+      { "icon": "chat", "title": "Built-in Chat", "text": "Communicate with your driver directly within the platform — no need to share personal contacts." },
+      { "icon": "bell", "title": "Instant Notifications", "text": "Request status updates, schedule changes, and trip reminders arrive on time." },
+      { "icon": "headset", "title": "24/7 Support", "text": "Disputes and inquiries are handled by administrators and an AI assistant." }
+    ]
+  },
+  "forDrivers": {
+    "badge": "For Drivers",
+    "title": "Cover Your Travel Costs",
+    "description": "Publish trips in a few minutes, receive passenger requests, and manage your earnings in one dashboard. The platform handles search, communication, and booking.",
+    "perks": [
+      "Free registration and trip publishing",
+      "Manage vehicles and schedules in your personal dashboard",
+      "Booking requests with available seat verification",
+      "Income tracking and route analytics"
+    ],
+    "becomeDriver": "Become a Driver",
+    "howItWorks": "How It Works",
+    "weeklyEarnings": "Weekly Earnings",
+    "weeklyAmount": "28,400",
+    "tripsLabel": "Trips",
+    "tripsValue": "14",
+    "passengersLabel": "Passengers",
+    "passengersValue": "42",
+    "ratingLabel": "Rating",
+    "ratingValue": "4.9"
+  },
+  "reviews": {
+    "eyebrow": "Reviews",
+    "title": "What Users Are Saying",
+    "description": "Real experiences from passengers and drivers on the GETTIK.KG platform.",
+    "items": [
+      { "name": "Aigul M.", "role": "Passenger, Bishkek → Cholpon-Ata", "initials": "A", "rating": 5, "text": "I booked a seat the day before. The driver confirmed in minutes and shared the pickup point. We arrived comfortably and on time.", "color": "from-brand-500 to-brand-700" },
+      { "name": "Bakyt T.", "role": "Driver, Bishkek → Osh", "initials": "B", "rating": 5, "text": "I publish weekend trips and fill seats quickly. The dashboard is clean — earnings and rating are right there. Way better than searching in messengers.", "color": "from-sky-500 to-brand-700" },
+      { "name": "Dinara K.", "role": "Passenger, Bishkek → Karakol", "initials": "D", "rating": 5, "text": "I loved seeing the driver's rating and car before the trip. The in-platform chat meant I never had to share my number.", "color": "from-violet-500 to-brand-700" }
+    ]
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "title": "Frequently Asked Questions",
+    "description": "A quick overview of how the platform and trip booking work.",
+    "items": [
+      { "q": "How do I book a seat?", "a": "Enter your route, date, and number of passengers in the search, pick a trip, review the driver's profile and vehicle, then click 'Book'. The request goes to the driver — once confirmed, you'll receive pickup details." },
+      { "q": "Do I pay at the time of booking?", "a": "The trip cost is calculated automatically: the price per seat multiplied by the number of seats. Cash payment to the driver and online payment via Kyrgyzstan's payment systems are both supported." },
+      { "q": "Can I be both a driver and a passenger?", "a": "Yes. One account lets you switch between driver and passenger modes. To publish trips you need to complete identity verification and add a vehicle." },
+      { "q": "How are drivers verified?", "a": "Drivers go through verification: phone confirmation, identity and driving document checks, and vehicle inspection. The verification status is shown on the profile and trip card." },
+      { "q": "What happens if a trip is cancelled?", "a": "When a driver cancels, all confirmed passengers receive a notification. Cancellation and refund rules are set within the platform — terms are always visible before you book." },
+      { "q": "Is there a mobile app?", "a": "GETTIK.KG works as a Progressive Web App: add the site to your phone's home screen, receive push notifications, and use the offline page — no app store download required." }
+    ]
+  },
+  "cta": {
+    "badge": "Installable on Your Phone",
+    "title": "Start Traveling Today",
+    "description": "Find rideshares, book a seat, or publish your own trip. GETTIK.KG is available as a website and as an app on your phone.",
+    "findRide": "Find a Ride",
+    "publishTrip": "Publish a Trip",
+    "pushNotifications": "Push Notifications",
+    "fastLoad": "Fast Load",
+    "offlinePage": "Offline Page"
+  },
+  "footer": {
+    "description": "A digital platform for finding rideshares and booking seats in intercity trips across Kyrgyzstan.",
+    "allRightsReserved": "All rights reserved.",
+    "country": "Kyrgyz Republic",
+    "currencyLabel": "Currency:",
+    "currencyValue": "KGS",
+    "languageLabel": "RUS · KYR · ENG",
+    "columns": [
+      { "title": "Platform", "links": ["Search Trips", "Popular Directions", "How It Works", "Become a Driver"] },
+      { "title": "Company", "links": ["About the Project", "News & Promotions", "Contact Us", "Blog"] },
+      { "title": "Support", "links": ["Help & FAQ", "Booking Policy", "Cancellation Policy", "Get in Touch"] },
+      { "title": "Legal", "links": ["Privacy Policy", "Public Offer", "Terms of Use", "Data Processing"] }
+    ]
+  },
+  "common": {
+    "currency": "som",
+    "from": "from",
+    "km": "km",
+    "about": "approx.",
+    "hourShort": "h",
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "passenger": "Passenger",
+    "driver": "Driver"
+  },
+  "cities": ["Bishkek", "Karakol", "Osh", "Cholpon-Ata", "Naryn", "Talas", "Balykchy", "Jalal-Abad", "Tokmok", "Kant", "Kemin", "Uzgen"],
+  "plural": {
+    "passenger": ["passenger", "passengers", "passengers"],
+    "trip": ["trip", "trips", "trips"],
+    "seat": ["seat", "seats", "seats"]
+  }
+}
